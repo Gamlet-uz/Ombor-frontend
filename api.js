@@ -16,12 +16,19 @@ export async function saveExpense(payload) {
   return res.json();
 }
 
+// ⚠️ Yoddan ko'tarilgan funksiya (Admin uchun)
+export async function fetchTodayExpenses() {
+  const res = await fetch(`${API_BASE_URL}/api/expenses/today`);
+  return res.json();
+}
+
+// === YANGI QO'SHILGAN FUNKSIYALAR ===
+
 export async function fetchHistory(category) {
   const res = await fetch(`${API_BASE_URL}/api/expenses/history?category=${category}`);
   return res.json();
 }
 
-// MAHSULOTLAR UCHUN API
 export async function fetchProducts(category) {
   const res = await fetch(`${API_BASE_URL}/api/products?category=${category}`);
   return res.json();
@@ -40,7 +47,6 @@ export async function deleteProduct(id) {
   return res.json();
 }
 
-// PROFIL UCHUN API
 export async function updateProfile(userId, data) {
   const res = await fetch(`${API_BASE_URL}/api/staff/${userId}`, {
     method: "PUT", headers: { "Content-Type": "application/json" },
