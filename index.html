@@ -24,8 +24,7 @@
 <body class="bg-gray-100 min-h-screen font-sans text-gray-800 p-4">
 
   <div class="w-full max-w-sm mx-auto">
-
-    <!-- ================= 1. PIN-KOD EKRANI ================= -->
+    <!-- PIN-KOD EKRANI -->
     <div id="screen-auth" class="bg-white rounded-3xl shadow-lg p-6 text-center mt-4">
       <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3">🔒</div>
       <h2 class="text-xl font-extrabold text-gray-800">Shaxsiy kodni kiriting</h2>
@@ -57,21 +56,16 @@
       </div>
     </div>
 
-    <!-- ================= 2. MUTAXASSISLIK KONTEYNERI (DINAMIK) ================= -->
+    <!-- MUTAXASSISLIK KONTEYNERI -->
     <div id="module-container" class="hidden"></div>
-
   </div>
 
-  <!-- type="module" ishlatilyapti, chunki tashqi .js fayllar import qilinadi -->
   <script type="module">
+    // Faqat 3 ta fayl chaqiriladi!
     import { loginWithPin } from "./api.js";
-    import { renderOvqat } from "./modules/ovqat.js";
-    import { renderSomsa } from "./modules/somsa.js";
-    import { renderShashlik } from "./modules/shashlik.js";
-    import { renderFastFood } from "./modules/fastfood.js";
+    import { renderWorker } from "./modules/worker.js";
     import { renderAdmin } from "./modules/admin.js";
 
-    // Telegram UI gacha kengaytirish
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.expand();
     }
@@ -81,7 +75,6 @@
     const container = document.getElementById("module-container");
     const errorEl = document.getElementById("pinError");
 
-    // Klaviatura funksiyalarini global (window) ga ulash (html onclick ishlashi uchun)
     window.pressKey = function(key) {
       if (enteredPin.length < 4) {
         enteredPin += key;
@@ -123,17 +116,11 @@
 
           const user = res.user;
 
-          // Backenddan qaytgan roliga/toifasiga qarab kerakli faylni ishga tushirish
+          // Admin bo'lsa admin panel, aks holda ishchi panel ochiladi
           if (user.role === "admin") {
             renderAdmin(container, user, handleLogout);
-          } else if (user.category === "Ovqat") {
-            renderOvqat(container, user, handleLogout);
-          } else if (user.category === "Somsa") {
-            renderSomsa(container, user, handleLogout);
-          } else if (user.category === "Shashlik") {
-            renderShashlik(container, user, handleLogout);
-          } else if (user.category === "Fast food") {
-            renderFastFood(container, user, handleLogout);
+          } else {
+            renderWorker(container, user, handleLogout);
           }
         } else {
           errorEl.textContent = res.message || "PIN-kod noto'g'ri!";
