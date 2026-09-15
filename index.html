@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kafe Rasxod Tizimi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      transition: all 0.2s;
+    }
+    .pin-dot.filled {
+      background-color: #2563eb;
+      border-color: #2563eb;
+      transform: scale(1.15);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans text-gray-800 p-4">
+
+  <div class="w-full max-w-sm mx-auto">
+
+    <!-- ================= 1. PIN-KOD EKRANI ================= -->
+    <div id="screen-auth" class="bg-white rounded-3xl shadow-lg p-6 text-center mt-4">
+      <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3">🔒</div>
+      <h2 class="text-xl font-extrabold text-gray-800">Shaxsiy kodni kiriting</h2>
+      <p class="text-xs text-gray-400 mt-1 mb-5">Har bir mutaxassis o'z kodini teradi</p>
+
+      <div class="flex justify-center space-x-4 mb-6">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+
+      <div id="pinError" class="text-xs text-red-500 font-semibold mb-3 h-4"></div>
+
+      <!-- Sensorli PIN klaviatura -->
+      <div class="grid grid-cols-3 gap-3 max-w-[260px] mx-auto">
+        <button onclick="pressKey('1')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">1</button>
+        <button onclick="pressKey('2')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">2</button>
+        <button onclick="pressKey('3')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">3</button>
+        <button onclick="pressKey('4')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">4</button>
+        <button onclick="pressKey('5')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">5</button>
+        <button onclick="pressKey('6')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">6</button>
+        <button onclick="pressKey('7')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">7</button>
+        <button onclick="pressKey('8')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">8</button>
+        <button onclick="pressKey('9')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">9</button>
+        <button onclick="clearPin()" class="h-14 rounded-2xl bg-gray-50 text-red-500 font-bold text-sm border border-gray-100">C</button>
+        <button onclick="pressKey('0')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 font-bold text-xl border border-gray-100">0</button>
+        <button onclick="deleteLastKey()" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 font-bold text-lg border border-gray-100">⌫</button>
+      </div>
+    </div>
+
+    <!-- ================= 2. MUTAXASSISLIK KONTEYNERI (DINAMIK) ================= -->
+    <div id="module-container" class="hidden"></div>
+
+  </div>
+
+  <!-- type="module" ishlatilyapti, chunki tashqi .js fayllar import qilinadi -->
+  <script type="module">
+    import { loginWithPin } from "./api.js";
+    import { renderOvqat } from "./modules/ovqat.js";
+    import { renderSomsa } from "./modules/somsa.js";
+    import { renderShashlik } from "./modules/shashlik.js";
+    import { renderFastFood } from "./modules/fastfood.js";
+    import { renderAdmin } from "./modules/admin.js";
+
+    // Telegram UI gacha kengaytirish
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.expand();
+    }
+
+    let enteredPin = "";
+    const authScreen = document.getElementById("screen-auth");
+    const container = document.getElementById("module-container");
+    const errorEl = document.getElementById("pinError");
+
+    // Klaviatura funksiyalarini global (window) ga ulash (html onclick ishlashi uchun)
+    window.pressKey = function(key) {
+      if (enteredPin.length < 4) {
+        enteredPin += key;
+        updateDots();
+        if (enteredPin.length === 4) {
+          setTimeout(verifyPinWithServer, 150);
+        }
+      }
+    };
+
+    window.deleteLastKey = function() {
+      enteredPin = enteredPin.slice(0, -1);
+      updateDots();
+      errorEl.textContent = "";
+    };
+
+    window.clearPin = function() {
+      enteredPin = "";
+      updateDots();
+      errorEl.textContent = "";
+    };
+
+    function updateDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.toggle("filled", i < enteredPin.length);
+      }
+    }
+
+    async function verifyPinWithServer() {
+      try {
+        errorEl.textContent = "Tekshirilmoqda...";
+        const res = await loginWithPin(enteredPin);
+
+        if (res.success && res.user) {
+          errorEl.textContent = "";
+          authScreen.classList.add("hidden");
+          container.classList.remove("hidden");
+
+          const user = res.user;
+
+          // Backenddan qaytgan roliga/toifasiga qarab kerakli faylni ishga tushirish
+          if (user.role === "admin") {
+            renderAdmin(container, user, handleLogout);
+          } else if (user.category === "Ovqat") {
+            renderOvqat(container, user, handleLogout);
+          } else if (user.category === "Somsa") {
+            renderSomsa(container, user, handleLogout);
+          } else if (user.category === "Shashlik") {
+            renderShashlik(container, user, handleLogout);
+          } else if (user.category === "Fast food") {
+            renderFastFood(container, user, handleLogout);
+          }
+        } else {
+          errorEl.textContent = res.message || "PIN-kod noto'g'ri!";
+          window.clearPin();
+        }
+      } catch (e) {
+        errorEl.textContent = "Server bilan ulanib bo'lmadi!";
+        window.clearPin();
+      }
+    }
+
+    function handleLogout() {
+      container.innerHTML = "";
+      container.classList.add("hidden");
+      authScreen.classList.remove("hidden");
+      window.clearPin();
+    }
+  </script>
+</body>
+</html>
