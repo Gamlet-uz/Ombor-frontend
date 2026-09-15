@@ -2,14 +2,21 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Телеграмда ва мобил қурилмаларда тўлиқ экран учун -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Кафе Ҳисоб-Китоб Тизими</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
   <style>
     body {
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent; /* Босгандаги кўк фонни йўқотиш */
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden; /* Ёнга силжиб кетишни олдини олиш */
     }
+    
     .pin-dot {
       width: 14px;
       height: 14px;
@@ -17,29 +24,29 @@
       border: 2px solid #cbd5e1;
       transition: all 0.2s ease-in-out;
     }
+    
     .pin-dot.filled {
       background-color: #2563eb;
       border-color: #2563eb;
       transform: scale(1.15);
     }
+    
     .fade-in {
       animation: fadeIn 0.3s ease-in-out forwards;
     }
+    
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans text-gray-800 p-4 select-none">
+<body class="bg-gray-50 font-sans text-gray-800 select-none w-full min-h-screen">
 
-  <div class="w-full max-w-sm mx-auto h-full flex flex-col justify-center">
-
-    <!-- ================= 1. ПИН-КОД ЭКРАНИ ================= -->
-    <div id="screen-auth" class="bg-white rounded-[2rem] shadow-xl p-8 text-center mt-6 fade-in">
-      <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-4 shadow-sm border border-blue-100">
-        🔒
-      </div>
+  <!-- ================= 1. ПИН-КОД ЭКРАНИ ================= -->
+  <div id="screen-auth" class="min-h-screen w-full flex items-center justify-center px-4 fade-in">
+    <div class="bg-white rounded-[2rem] shadow-xl p-8 text-center w-full max-w-sm">
+      <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-4 shadow-sm border border-blue-100">🔒</div>
       <h2 class="text-2xl font-black text-gray-800 tracking-tight">Шахсий код</h2>
       <p class="text-xs text-gray-400 mt-2 mb-6 font-medium">Тизимга кириш учун кодингизни теринг</p>
 
@@ -53,28 +60,32 @@
       <div id="pinError" class="text-xs text-red-500 font-bold mb-4 h-4 transition-all"></div>
 
       <!-- Сенсорли ПИН клавиатура -->
-      <div class="grid grid-cols-3 gap-4 max-w-[260px] mx-auto">
+      <div class="grid grid-cols-3 gap-3 w-full max-w-[260px] mx-auto">
         <button onclick="pressKey('1')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">1</button>
         <button onclick="pressKey('2')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">2</button>
         <button onclick="pressKey('3')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">3</button>
+        
         <button onclick="pressKey('4')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">4</button>
         <button onclick="pressKey('5')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">5</button>
         <button onclick="pressKey('6')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">6</button>
+        
         <button onclick="pressKey('7')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">7</button>
         <button onclick="pressKey('8')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">8</button>
         <button onclick="pressKey('9')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">9</button>
+        
         <button onclick="clearPin()" class="h-14 rounded-2xl bg-gray-50 hover:bg-red-50 text-red-500 active:scale-95 transition-all font-black text-xl shadow-sm border border-gray-100">C</button>
         <button onclick="pressKey('0')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">0</button>
         <button onclick="deleteLastKey()" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 active:scale-95 transition-all font-black text-xl text-gray-700 shadow-sm border border-gray-100 flex items-center justify-center">
+          <!-- Backspace Icon -->
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" /></svg>
         </button>
       </div>
     </div>
-
-    <!-- ================= 2. МУТАХАССИСЛИК КОНТЕЙНЕРИ ================= -->
-    <div id="module-container" class="hidden fade-in w-full h-full pb-0 -mx-4 px-4"></div>
-
   </div>
+
+  <!-- ================= 2. МУТАХАССИСЛИК (АДМИН / ИШЧИ) КОНТЕЙНЕРИ ================= -->
+  <!-- w-full орқали телефон экрани четигача тўлиқ очилади -->
+  <div id="module-container" class="hidden fade-in w-full min-h-screen"></div>
 
   <script type="module">
     import { loginWithPin } from "./api.js";
@@ -92,10 +103,8 @@
     const container = document.getElementById("module-container");
     const errorEl = document.getElementById("pinError");
 
-    function haptic() {
-      if (tg && tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('light');
-      }
+    function haptic() { 
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
     }
 
     window.pressKey = function(key) {
@@ -105,6 +114,7 @@
         updateDots();
         errorEl.textContent = "";
         
+        // 4 та рақам терилгач серверга юбориш
         if (enteredPin.length === 4) {
           setTimeout(verifyPinWithServer, 200);
         }
@@ -148,31 +158,28 @@
           authScreen.classList.add("hidden");
           container.classList.remove("hidden");
           
-          if (tg && tg.HapticFeedback) {
-             tg.HapticFeedback.notificationOccurred('success');
-          }
+          if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
           const user = res.user;
 
-          // Админ бўлса admin panel, акс ҳолда ишчи панел
+          // Админ ёки Ишчи панелига йўналтириш
           if (user.role === "admin") {
             renderAdmin(container, user, handleLogout);
           } else {
             renderWorker(container, user, handleLogout); 
           }
-          
         } else {
           if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
           errorEl.classList.replace("text-blue-500", "text-red-500");
           errorEl.textContent = res.message || "ПИН-код нотўғри!";
-          enteredPin = "";
+          enteredPin = ""; 
           updateDots();
         }
       } catch (e) {
         if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         errorEl.classList.replace("text-blue-500", "text-red-500");
         errorEl.textContent = "Сервер билан уланиб бўлмади!";
-        enteredPin = "";
+        enteredPin = ""; 
         updateDots();
       }
     }
