@@ -5,52 +5,61 @@ export function renderWorker(container, user, onLogout) {
   let products = [];
   let history = [];
 
-  // Asosiy qobiq va Bottom Nav
+  const tg = window.Telegram?.WebApp;
+
+  // Ҳаяжон (вибрация) эффекти
+  function haptic(type = 'light') {
+    if (tg && tg.HapticFeedback) {
+      if(type === 'success' || type === 'error') tg.HapticFeedback.notificationOccurred(type);
+      else tg.HapticFeedback.impactOccurred(type);
+    }
+  }
+
+  // Асосий қобиқ ва Пастки Навигация (Bottom Nav)
   container.innerHTML = `
-    <div class="bg-gray-50 min-h-screen flex flex-col pb-20">
+    <div class="bg-gray-50 min-h-screen flex flex-col pb-24">
       
-      <!-- Sarlavha -->
+      <!-- Сарлавҳа -->
       <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
         <div>
-          <span class="text-[10px] font-bold uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-full">${user.category}</span>
-          <h3 class="font-black text-lg text-gray-900 mt-1">${user.name}</h3>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">${user.category}</span>
+          <h3 class="font-black text-lg text-gray-900 mt-1.5">${user.name}</h3>
         </div>
-        <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 px-3 py-1.5 rounded-xl">Chiqish</button>
+        <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
       </div>
 
-      <!-- Tab Kontentlari (Dinamik o'zgaradi) -->
-      <div id="tabContent" class="flex-1 p-4 transition-opacity duration-300 ease-in-out">
-        <div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
-      </div>
+      <!-- Таб Контентлари (Динамик ўзгаради) -->
+      <div id="tabContent" class="flex-1 p-4 transition-opacity duration-300 ease-in-out"></div>
 
       <!-- Bottom Navigation Bar -->
-      <div class="fixed bottom-0 w-full max-w-sm bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+      <div class="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-white/95 backdrop-blur-md border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-20">
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-blue-600 transition-transform active:scale-90" data-tab="expense">
           <span class="text-xl mb-1">📝</span>
-          <span class="text-[10px] font-bold">Xarajat</span>
+          <span class="text-[10px] font-bold">Харажат</span>
         </button>
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="history">
           <span class="text-xl mb-1">📊</span>
-          <span class="text-[10px] font-bold">Hisobot</span>
+          <span class="text-[10px] font-bold">Ҳисобот</span>
         </button>
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="products">
           <span class="text-xl mb-1">📦</span>
-          <span class="text-[10px] font-bold">Mahsulot</span>
+          <span class="text-[10px] font-bold">Маҳсулот</span>
         </button>
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="profile">
           <span class="text-xl mb-1">⚙️</span>
-          <span class="text-[10px] font-bold">Profil</span>
+          <span class="text-[10px] font-bold">Профил</span>
         </button>
       </div>
     </div>
   `;
 
   const tabContent = document.getElementById("tabContent");
-  document.getElementById("logoutBtn").onclick = onLogout;
+  document.getElementById("logoutBtn").onclick = () => { haptic(); onLogout(); };
 
-  // Navigatsiya tugmalari logikasi
+  // Навигация тугмалари мантиғи
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.onclick = () => {
+      haptic('light');
       document.querySelectorAll(".nav-btn").forEach(b => {
         b.classList.remove("text-blue-600");
         b.classList.add("text-gray-400");
@@ -60,7 +69,6 @@ export function renderWorker(container, user, onLogout) {
       
       activeTab = btn.getAttribute("data-tab");
       
-      // Animatsiya uchun
       tabContent.style.opacity = 0;
       setTimeout(() => {
         loadTabContent();
@@ -69,33 +77,37 @@ export function renderWorker(container, user, onLogout) {
     };
   });
 
-  // Tablarni yuklash boshqaruvchisi
+  // Табларни юклаш бошқарувчиси
   async function loadTabContent() {
-    tabContent.innerHTML = `<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>`;
+    tabContent.innerHTML = `<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="text-xs text-gray-400 mt-3 font-bold">Юкланмоқда...</p></div>`;
     
-    if (activeTab === 'expense') {
-      const res = await fetchProducts(user.category);
-      products = res.records || [];
-      renderExpenseTab();
-    } else if (activeTab === 'history') {
-      const res = await fetchHistory(user.category);
-      history = res.records || [];
-      renderHistoryTab();
-    } else if (activeTab === 'products') {
-      const res = await fetchProducts(user.category);
-      products = res.records || [];
-      renderProductsTab();
-    } else if (activeTab === 'profile') {
-      renderProfileTab();
+    try {
+      if (activeTab === 'expense') {
+        const res = await fetchProducts(user.category);
+        products = res.records || [];
+        renderExpenseTab();
+      } else if (activeTab === 'history') {
+        const res = await fetchHistory(user.category);
+        history = res.records || [];
+        renderHistoryTab();
+      } else if (activeTab === 'products') {
+        const res = await fetchProducts(user.category);
+        products = res.records || [];
+        renderProductsTab();
+      } else if (activeTab === 'profile') {
+        renderProfileTab();
+      }
+    } catch (e) {
+      tabContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">Маълумотларни юклаб бўлмади!</div>`;
     }
   }
 
   // ==========================================
-  // TAB 1: XARAJAT YARATISH
+  // ТАБ 1: ХАРАЖАТ ЯРАТИШ
   // ==========================================
   function renderExpenseTab() {
     if (products.length === 0) {
-      tabContent.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold">Mahsulotlar yo'q. Oldin mahsulot qo'shing.</div>`;
+      tabContent.innerHTML = `<div class="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Маҳсулотлар йўқ.<br>Олдин "Маҳсулот" бўлимидан қўшинг.</p></div>`;
       return;
     }
 
@@ -103,10 +115,10 @@ export function renderWorker(container, user, onLogout) {
       <div class="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2">
         <div class="flex-1 pr-2">
           <div class="font-bold text-sm text-gray-800">${p.name}</div>
-          <div class="text-[10px] text-gray-400">${p.price.toLocaleString()} so'm / ${p.unit}</div>
+          <div class="text-[10px] text-gray-400">${p.price.toLocaleString()} сўм / ${p.unit}</div>
         </div>
         <div class="w-20">
-          <input type="number" step="any" min="0" data-id="${p.id}" class="qty-input w-full border border-gray-200 rounded-xl p-2 text-center font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500" placeholder="0">
+          <input type="number" step="any" min="0" data-id="${p.id}" class="qty-input w-full border border-gray-200 rounded-xl p-2 text-center font-bold text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
         </div>
         <div class="w-24 text-right">
           <span class="text-sm font-black text-blue-600 item-total" id="tot-${p.id}">0</span>
@@ -115,29 +127,31 @@ export function renderWorker(container, user, onLogout) {
     `).join('');
 
     tabContent.innerHTML = `
-      <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2">
-        <div class="flex-1">Mahsulot</div>
-        <div class="w-20 text-center">Miqdor</div>
-        <div class="w-24 text-right">Summa</div>
+      <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">
+        <div class="flex-1">Маҳсулот</div>
+        <div class="w-20 text-center">Миқдор</div>
+        <div class="w-24 text-right">Сумма</div>
       </div>
       <div class="mb-4">${rows}</div>
       
       <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4">
-        <label class="block text-xs font-bold text-gray-500 mb-1">Xodim oyligi (so'm):</label>
-        <input type="number" id="salaryInput" class="w-full border rounded-xl p-3 mb-3 font-bold bg-gray-50" placeholder="0">
-        <label class="block text-xs font-bold text-gray-500 mb-1">Qo'shimcha rasxod:</label>
-        <input type="number" id="extraInput" class="w-full border rounded-xl p-3 font-bold bg-gray-50" placeholder="0">
+        <label class="block text-xs font-bold text-gray-500 mb-1.5">Ходим ойлиги (сўм):</label>
+        <input type="number" id="salaryInput" class="w-full border border-gray-200 rounded-xl p-3 mb-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
+        <label class="block text-xs font-bold text-gray-500 mb-1.5">Қўшимча харажат (сўм):</label>
+        <input type="number" id="extraInput" class="w-full border border-gray-200 rounded-xl p-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
       </div>
 
-      <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-lg mb-5">
-        <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Umumiy Jami</div>
-        <div class="text-3xl font-black" id="grandTotal">0 so'm</div>
+      <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-lg mb-5 text-center">
+        <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Умумий Жами</div>
+        <div class="text-3xl font-black mt-1" id="grandTotal">0 сўм</div>
       </div>
 
-      <button id="saveExpenseBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition">Saqlash</button>
+      <button id="saveExpenseBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-transform">
+        Харажатни Сақлаш
+      </button>
     `;
 
-    // Jonli hisoblash
+    // Жонли ҳисоблаш
     const calc = () => {
       let sum = 0;
       document.querySelectorAll('.qty-input').forEach(input => {
@@ -149,17 +163,18 @@ export function renderWorker(container, user, onLogout) {
       });
       const sal = parseFloat(document.getElementById("salaryInput").value) || 0;
       const ext = parseFloat(document.getElementById("extraInput").value) || 0;
-      document.getElementById("grandTotal").textContent = (sum + sal + ext).toLocaleString() + " so'm";
+      document.getElementById("grandTotal").textContent = (sum + sal + ext).toLocaleString() + " сўм";
     };
 
     document.querySelectorAll('.qty-input').forEach(i => i.addEventListener('input', calc));
     document.getElementById("salaryInput").addEventListener('input', calc);
     document.getElementById("extraInput").addEventListener('input', calc);
 
-    // Saqlash
+    // Сақлаш
     document.getElementById("saveExpenseBtn").onclick = async (e) => {
       const btn = e.target;
-      btn.disabled = true; btn.textContent = "Saqlanmoqda...";
+      haptic('medium');
+      btn.disabled = true; btn.textContent = "Сақланмоқда ⏳...";
       
       const items = [];
       document.querySelectorAll('.qty-input').forEach(input => {
@@ -176,161 +191,205 @@ export function renderWorker(container, user, onLogout) {
       const grandTotal = itemsSum + sal + ext;
 
       if (grandTotal === 0) {
-        alert("Xarajat kiritilmadi!");
-        btn.disabled = false; btn.textContent = "Saqlash"; return;
+        haptic('error');
+        alert("Ҳеч қандай харажат киритилмади!");
+        btn.disabled = false; btn.textContent = "Харажатни Сақлаш"; return;
       }
 
-      const res = await saveExpense({ category: user.category, worker: user.name, items, salary: sal, extra: ext, itemsSum, grandTotal });
-      if (res.success) {
-        alert("Saqlandi!");
-        loadTabContent(); // Ekranni tozalash
-      } else alert("Xato!");
+      try {
+        const res = await saveExpense({ category: user.category, worker: user.name, items, salary: sal, extra: ext, itemsSum, grandTotal });
+        if (res.success) {
+          haptic('success');
+          alert("✅ Кунлик харажат муваффақиятли сақланди!");
+          loadTabContent(); // Экранни тозалаш ва янгилаш
+        } else {
+          haptic('error');
+          alert("Хатолик: " + res.message);
+        }
+      } catch (err) {
+        haptic('error');
+        alert("Сервер билан уланишда хатолик!");
+      } finally {
+        if(btn) { btn.disabled = false; btn.textContent = "Харажатни Сақлаш"; }
+      }
     };
   }
 
   // ==========================================
-  // TAB 2: HISOBOTLAR
+  // ТАБ 2: ҲИСОБОТЛАР
   // ==========================================
   function renderHistoryTab() {
     if (history.length === 0) {
-      tabContent.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold">Hisobotlar yo'q</div>`;
+      tabContent.innerHTML = `<div class="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Ҳисоботлар йўқ</p></div>`;
       return;
     }
 
     const cards = history.map(h => {
       const itemsList = (h.items || []).map(i => `
-        <div class="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
-          <span class="text-gray-600">${i.name} (${i.qty}${i.unit})</span>
+        <div class="flex justify-between items-center text-xs py-1.5 border-b border-gray-100 last:border-0">
+          <span class="text-gray-600">${i.name} (${i.qty} ${i.unit})</span>
           <span class="font-bold text-gray-800">${i.total.toLocaleString()}</span>
         </div>
       `).join('');
 
       return `
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-3 overflow-hidden">
-          <div class="p-4 cursor-pointer flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('hidden')">
+          <div class="p-4 cursor-pointer flex justify-between items-center bg-gray-50/30 hover:bg-gray-50 transition active:bg-gray-100" onclick="this.nextElementSibling.classList.toggle('hidden'); if(window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');">
             <div>
-              <div class="font-bold text-gray-800">${h.date}</div>
-              <div class="text-[10px] text-gray-400">Tafsilotlarni ko'rish 🔽</div>
+              <div class="font-bold text-gray-800 tracking-wide">${h.date}</div>
+              <div class="text-[10px] text-blue-500 font-semibold mt-0.5">Батафсил 🔽</div>
             </div>
             <div class="text-right">
-              <div class="font-black text-emerald-600">${h.grandTotal.toLocaleString()} so'm</div>
+              <div class="font-black text-red-500 text-lg">${h.grandTotal.toLocaleString()} сўм</div>
             </div>
           </div>
-          <!-- Ochiladigan qism -->
-          <div class="hidden bg-gray-50 p-4 border-t border-gray-100">
-            <div class="mb-2 pb-2 border-b border-gray-200">
-              <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Ishlatilgan mahsulotlar</div>
-              ${itemsList || '<div class="text-xs text-gray-400">Mahsulot ishlatilmagan</div>'}
+          <!-- Очиладиган қисм -->
+          <div class="hidden p-4 border-t border-gray-100 bg-white">
+            <div class="mb-3 pb-3 border-b border-gray-100">
+              <div class="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">Ишлатилган маҳсулотлар</div>
+              ${itemsList || '<div class="text-xs text-gray-400">Маҳсулот ишлатилмаган</div>'}
             </div>
-            <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">Oylik:</span><span class="font-bold">${h.salary.toLocaleString()}</span></div>
-            <div class="flex justify-between text-xs"><span class="text-gray-500">Qo'shimcha:</span><span class="font-bold">${h.extra.toLocaleString()}</span></div>
+            <div class="flex justify-between text-xs mb-1.5"><span class="text-gray-500">Ойлик:</span><span class="font-bold">${h.salary.toLocaleString()}</span></div>
+            <div class="flex justify-between text-xs"><span class="text-gray-500">Қўшимча харажат:</span><span class="font-bold">${h.extra.toLocaleString()}</span></div>
           </div>
         </div>
       `;
     }).join('');
 
-    tabContent.innerHTML = `<h4 class="font-extrabold text-gray-800 mb-4 px-1">Tarix va Hisobotlar</h4>${cards}`;
+    tabContent.innerHTML = `<h4 class="font-extrabold text-gray-400 mb-4 px-1 text-xs uppercase tracking-widest">Тарих ва Ҳисоботлар</h4>${cards}`;
   }
 
   // ==========================================
-  // TAB 3: MAHSULOTLAR (QO'SHISH/O'CHIRISH)
+  // ТАБ 3: МАҲСУЛОТЛАР (ҚЎШИШ/ЎЧИРИШ)
   // ==========================================
   function renderProductsTab() {
     const list = products.map(p => `
       <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2">
         <div>
           <div class="font-bold text-sm text-gray-800">${p.name}</div>
-          <div class="text-[10px] text-gray-500 font-semibold">${p.price.toLocaleString()} so'm / ${p.unit}</div>
+          <div class="text-[10px] text-gray-500 font-semibold">${p.price.toLocaleString()} сўм / ${p.unit}</div>
         </div>
-        <button class="del-prod text-red-500 bg-red-50 p-2 rounded-xl active:scale-90 transition" data-id="${p.id}">🗑</button>
+        <button class="del-prod text-red-500 bg-red-50 p-2.5 rounded-xl active:scale-90 transition" data-id="${p.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        </button>
       </div>
     `).join('');
 
     tabContent.innerHTML = `
-      <div class="bg-white p-4 rounded-3xl shadow-sm border border-blue-100 mb-5">
-        <h4 class="font-black text-sm mb-3 text-blue-900">Yangi qo'shish</h4>
-        <input type="text" id="pName" class="w-full border rounded-xl p-3 mb-2 bg-gray-50 text-sm" placeholder="Nomi (masalan: Go'sht)">
-        <div class="flex space-x-2 mb-3">
-          <input type="number" id="pPrice" class="w-2/3 border rounded-xl p-3 bg-gray-50 text-sm" placeholder="Narxi">
-          <select id="pUnit" class="w-1/3 border rounded-xl p-3 bg-gray-50 text-sm">
-            <option value="kg">kg</option><option value="litr">litr</option><option value="dona">dona</option>
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-blue-100 mb-6">
+        <h4 class="font-black text-sm mb-3 text-blue-900">Янги қўшиш</h4>
+        <input type="text" id="pName" class="w-full border border-gray-200 rounded-xl p-3 mb-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Номи (масалан: Гўшт)">
+        <div class="flex space-x-2 mb-4">
+          <input type="number" id="pPrice" class="w-2/3 border border-gray-200 rounded-xl p-3 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Нархи">
+          <select id="pUnit" class="w-1/3 border border-gray-200 rounded-xl p-3 bg-gray-50 text-sm outline-none">
+            <option value="кг">кг</option><option value="литр">литр</option><option value="дона">дона</option>
           </select>
         </div>
-        <button id="addProdBtn" class="w-full bg-blue-100 text-blue-700 font-bold py-3 rounded-xl active:scale-95 transition">Bazaga qo'shish</button>
+        <button id="addProdBtn" class="w-full bg-blue-50 text-blue-600 border border-blue-100 font-bold py-3.5 rounded-xl active:scale-95 transition-transform">Базага қўшиш</button>
       </div>
-      <h4 class="font-extrabold text-gray-800 mb-3 px-1">Mavjud mahsulotlar</h4>
-      ${list || '<div class="text-center text-xs text-gray-400">Mahsulotlar yo\'q</div>'}
+      
+      <h4 class="font-extrabold text-gray-400 mb-3 px-1 text-xs uppercase tracking-widest">Мавжуд маҳсулотлар</h4>
+      ${list || '<div class="text-center text-xs text-gray-400 py-4">Маҳсулотлар йўқ</div>'}
     `;
 
-    // O'chirish
+    // Ўчириш
     document.querySelectorAll('.del-prod').forEach(btn => {
       btn.onclick = async () => {
-        if(confirm("Haqiqatan o'chirasizmi?")) {
+        haptic('medium');
+        if(confirm("Ҳақиқатан ўчирасизми? Буни орқага қайтариб бўлмайди.")) {
           btn.innerHTML = "⏳";
           await deleteProduct(btn.dataset.id);
-          loadTabContent(); // Qayta yuklash
+          haptic('success');
+          loadTabContent();
         }
       };
     });
 
-    // Qo'shish
+    // Қўшиш
     document.getElementById("addProdBtn").onclick = async (e) => {
+      haptic('light');
       const name = document.getElementById("pName").value;
       const price = document.getElementById("pPrice").value;
       const unit = document.getElementById("pUnit").value;
-      if(!name || !price) return alert("To'ldiring!");
       
-      e.target.textContent = "Qo'shilmoqda...";
+      if(!name || !price) {
+        haptic('error');
+        return alert("Илтимос, номи ва нархини тўлдиринг!");
+      }
+      
+      e.target.disabled = true;
+      e.target.textContent = "Қўшилмоқда ⏳...";
       await addProduct({ category: user.category, name, price: Number(price), unit });
-      loadTabContent(); // Qayta yuklash
+      haptic('success');
+      loadTabContent(); // Қайта юклаш
     };
   }
 
   // ==========================================
-  // TAB 4: PROFIL
+  // ТАБ 4: ПРОФИЛ ВА СОЗЛАМАЛАР
   // ==========================================
   function renderProfileTab() {
     tabContent.innerHTML = `
-      <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 text-center">
-        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-3xl mb-2">👤</div>
-        <h2 class="font-black text-xl text-gray-900">${user.name}</h2>
-        <p class="text-xs text-gray-500 font-bold uppercase">${user.category} bo'limi</p>
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-5 text-center">
+        <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-4xl mb-3 shadow-sm border border-blue-100">👤</div>
+        <h2 class="font-black text-2xl text-gray-900 tracking-tight">${user.name}</h2>
+        <p class="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-widest">${user.category} бўлими</p>
       </div>
 
-      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-        <h4 class="font-bold text-sm mb-3">Sozlamalar</h4>
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+        <h4 class="font-bold text-sm mb-4 text-gray-800">Хавфсизлик ва Созламалар</h4>
         
-        <label class="block text-xs font-bold text-gray-500 mb-1">Yangi PIN-kod (4 ta raqam):</label>
-        <input type="number" id="newPin" class="w-full border rounded-xl p-3 mb-3 bg-gray-50 font-bold" placeholder="Yangi kodni kiriting">
+        <label class="block text-xs font-bold text-gray-500 mb-1.5">Янги ПИН-код (4 та рақам):</label>
+        <input type="number" id="newPin" class="w-full border border-gray-200 rounded-xl p-3.5 mb-4 bg-gray-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Янги кодни киритинг">
         
-        <label class="block text-xs font-bold text-gray-500 mb-1">Bildirishnoma uchun Chat ID:</label>
-        <input type="number" id="newChatId" class="w-full border rounded-xl p-3 mb-4 bg-gray-50" placeholder="Masalan: 12345678" value="${user.chatId || ''}">
+        <label class="block text-xs font-bold text-gray-500 mb-1.5 flex justify-between">
+          <span>Telegram Chat ID:</span>
+          <a href="https://t.me/userinfobot" target="_blank" class="text-blue-500">ID ни олиш</a>
+        </label>
+        <input type="number" id="newChatId" class="w-full border border-gray-200 rounded-xl p-3.5 mb-5 bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Масалан: 123456789" value="${user.chatId || ''}">
         
-        <button id="updateProfileBtn" class="w-full bg-gray-800 text-white font-bold py-3 rounded-xl active:scale-95 transition">Saqlash</button>
+        <button id="updateProfileBtn" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 rounded-2xl active:scale-95 transition-transform shadow-md">
+          Ўзгаришларни сақлаш
+        </button>
       </div>
     `;
 
     document.getElementById("updateProfileBtn").onclick = async (e) => {
+      haptic('medium');
       const pin = document.getElementById("newPin").value;
       const chatId = document.getElementById("newChatId").value;
       
       const payload = {};
-      if(pin) payload.pin = String(pin);
+      if(pin) {
+        if(pin.length !== 4) return alert("ПИН-код 4 та рақамдан иборат бўлиши керак!");
+        payload.pin = String(pin);
+      }
       if(chatId) payload.chatId = String(chatId);
 
-      if(Object.keys(payload).length === 0) return alert("O'zgarish yo'q");
+      if(Object.keys(payload).length === 0) return alert("Ҳеч қандай ўзгариш йўқ");
 
-      e.target.textContent = "Saqlanmoqda...";
-      const res = await updateProfile(user.id, payload); // Backenddan user.id kelishi shart
-      if (res.success) {
-        alert("Profil yangilandi!");
-        e.target.textContent = "Saqlash";
-      } else {
-        alert("Xatolik!");
+      e.target.disabled = true;
+      e.target.textContent = "Сақланмоқда ⏳...";
+      
+      try {
+        const res = await updateProfile(user.id, payload);
+        if (res.success) {
+          haptic('success');
+          alert("✅ Профил муваффақиятли янгиланди!");
+          document.getElementById("newPin").value = "";
+        } else {
+          haptic('error');
+          alert("Хатолик юз берди!");
+        }
+      } catch (err) {
+        alert("Сервер хатолиги!");
+      } finally {
+        e.target.disabled = false;
+        e.target.textContent = "Ўзгаришларни сақлаш";
       }
     };
   }
 
-  // Boshlang'ich yuklash
+  // Биринчи марта ишга тушириш
   loadTabContent();
 }
