@@ -15,12 +15,12 @@ export function renderWorker(container, user, onLogout) {
     }
   }
 
-  // Асосий қобиқ ва Пастки Навигация (Bottom Nav)
+  // Асосий қобиқ ва Пастки Навигация (Bottom Nav) - ТЎЛИҚ ЭКРАН (w-full)
   container.innerHTML = `
-    <div class="bg-gray-50 min-h-screen flex flex-col pb-24">
+    <div class="bg-gray-50 min-h-screen flex flex-col pb-24 w-full">
       
       <!-- Сарлавҳа -->
-      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
+      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10 w-full">
         <div>
           <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">${user.category}</span>
           <h3 class="font-black text-lg text-gray-900 mt-1.5">${user.name}</h3>
@@ -29,10 +29,10 @@ export function renderWorker(container, user, onLogout) {
       </div>
 
       <!-- Таб Контентлари (Динамик ўзгаради) -->
-      <div id="tabContent" class="flex-1 p-4 transition-opacity duration-300 ease-in-out"></div>
+      <div id="tabContent" class="flex-1 p-4 transition-opacity duration-300 ease-in-out w-full"></div>
 
-      <!-- Bottom Navigation Bar -->
-      <div class="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-white/95 backdrop-blur-md border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-20">
+      <!-- Bottom Navigation Bar (ТЎЛИҚ ЭКРАН КЕНГЛИГИДА) -->
+      <div class="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 flex justify-around items-center pt-2 pb-5 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-20">
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-blue-600 transition-transform active:scale-90" data-tab="expense">
           <span class="text-xl mb-1">📝</span>
           <span class="text-[10px] font-bold">Харажат</span>
@@ -79,7 +79,7 @@ export function renderWorker(container, user, onLogout) {
 
   // Табларни юклаш бошқарувчиси
   async function loadTabContent() {
-    tabContent.innerHTML = `<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="text-xs text-gray-400 mt-3 font-bold">Юкланмоқда...</p></div>`;
+    tabContent.innerHTML = `<div class="text-center py-10 w-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div><p class="text-xs text-gray-400 mt-3 font-bold">Юкланмоқда...</p></div>`;
     
     try {
       if (activeTab === 'expense') {
@@ -98,7 +98,7 @@ export function renderWorker(container, user, onLogout) {
         renderProfileTab();
       }
     } catch (e) {
-      tabContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">Маълумотларни юклаб бўлмади!</div>`;
+      tabContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold w-full">Маълумотларни юклаб бўлмади!</div>`;
     }
   }
 
@@ -107,12 +107,12 @@ export function renderWorker(container, user, onLogout) {
   // ==========================================
   function renderExpenseTab() {
     if (products.length === 0) {
-      tabContent.innerHTML = `<div class="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Маҳсулотлар йўқ.<br>Олдин "Маҳсулот" бўлимидан қўшинг.</p></div>`;
+      tabContent.innerHTML = `<div class="text-center py-12 w-full bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Маҳсулотлар йўқ.<br>Олдин "Маҳсулот" бўлимидан қўшинг.</p></div>`;
       return;
     }
 
     const rows = products.map(p => `
-      <div class="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2">
+      <div class="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
         <div class="flex-1 pr-2">
           <div class="font-bold text-sm text-gray-800">${p.name}</div>
           <div class="text-[10px] text-gray-400">${p.price.toLocaleString()} сўм / ${p.unit}</div>
@@ -127,21 +127,21 @@ export function renderWorker(container, user, onLogout) {
     `).join('');
 
     tabContent.innerHTML = `
-      <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider">
+      <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider w-full">
         <div class="flex-1">Маҳсулот</div>
         <div class="w-20 text-center">Миқдор</div>
         <div class="w-24 text-right">Сумма</div>
       </div>
-      <div class="mb-4">${rows}</div>
+      <div class="mb-4 w-full">${rows}</div>
       
-      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4">
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4 w-full">
         <label class="block text-xs font-bold text-gray-500 mb-1.5">Ходим ойлиги (сўм):</label>
         <input type="number" id="salaryInput" class="w-full border border-gray-200 rounded-xl p-3 mb-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
         <label class="block text-xs font-bold text-gray-500 mb-1.5">Қўшимча харажат (сўм):</label>
         <input type="number" id="extraInput" class="w-full border border-gray-200 rounded-xl p-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
       </div>
 
-      <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-lg mb-5 text-center">
+      <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-lg mb-5 text-center w-full">
         <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Умумий Жами</div>
         <div class="text-3xl font-black mt-1" id="grandTotal">0 сўм</div>
       </div>
@@ -220,20 +220,20 @@ export function renderWorker(container, user, onLogout) {
   // ==========================================
   function renderHistoryTab() {
     if (history.length === 0) {
-      tabContent.innerHTML = `<div class="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Ҳисоботлар йўқ</p></div>`;
+      tabContent.innerHTML = `<div class="text-center py-12 w-full bg-white rounded-3xl border border-gray-100 shadow-sm"><p class="text-gray-400 font-bold text-sm">Ҳисоботлар йўқ</p></div>`;
       return;
     }
 
     const cards = history.map(h => {
       const itemsList = (h.items || []).map(i => `
-        <div class="flex justify-between items-center text-xs py-1.5 border-b border-gray-100 last:border-0">
+        <div class="flex justify-between items-center text-xs py-1.5 border-b border-gray-100 last:border-0 w-full">
           <span class="text-gray-600">${i.name} (${i.qty} ${i.unit})</span>
           <span class="font-bold text-gray-800">${i.total.toLocaleString()}</span>
         </div>
       `).join('');
 
       return `
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-3 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-3 overflow-hidden w-full">
           <div class="p-4 cursor-pointer flex justify-between items-center bg-gray-50/30 hover:bg-gray-50 transition active:bg-gray-100" onclick="this.nextElementSibling.classList.toggle('hidden'); if(window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');">
             <div>
               <div class="font-bold text-gray-800 tracking-wide">${h.date}</div>
@@ -245,18 +245,18 @@ export function renderWorker(container, user, onLogout) {
           </div>
           <!-- Очиладиган қисм -->
           <div class="hidden p-4 border-t border-gray-100 bg-white">
-            <div class="mb-3 pb-3 border-b border-gray-100">
+            <div class="mb-3 pb-3 border-b border-gray-100 w-full">
               <div class="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">Ишлатилган маҳсулотлар</div>
               ${itemsList || '<div class="text-xs text-gray-400">Маҳсулот ишлатилмаган</div>'}
             </div>
-            <div class="flex justify-between text-xs mb-1.5"><span class="text-gray-500">Ойлик:</span><span class="font-bold">${h.salary.toLocaleString()}</span></div>
-            <div class="flex justify-between text-xs"><span class="text-gray-500">Қўшимча харажат:</span><span class="font-bold">${h.extra.toLocaleString()}</span></div>
+            <div class="flex justify-between text-xs mb-1.5 w-full"><span class="text-gray-500">Ойлик:</span><span class="font-bold">${h.salary.toLocaleString()}</span></div>
+            <div class="flex justify-between text-xs w-full"><span class="text-gray-500">Қўшимча харажат:</span><span class="font-bold">${h.extra.toLocaleString()}</span></div>
           </div>
         </div>
       `;
     }).join('');
 
-    tabContent.innerHTML = `<h4 class="font-extrabold text-gray-400 mb-4 px-1 text-xs uppercase tracking-widest">Тарих ва Ҳисоботлар</h4>${cards}`;
+    tabContent.innerHTML = `<h4 class="font-extrabold text-gray-400 mb-4 px-1 text-xs uppercase tracking-widest w-full">Тарих ва Ҳисоботлар</h4>${cards}`;
   }
 
   // ==========================================
@@ -264,7 +264,7 @@ export function renderWorker(container, user, onLogout) {
   // ==========================================
   function renderProductsTab() {
     const list = products.map(p => `
-      <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2">
+      <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
         <div>
           <div class="font-bold text-sm text-gray-800">${p.name}</div>
           <div class="text-[10px] text-gray-500 font-semibold">${p.price.toLocaleString()} сўм / ${p.unit}</div>
@@ -276,10 +276,10 @@ export function renderWorker(container, user, onLogout) {
     `).join('');
 
     tabContent.innerHTML = `
-      <div class="bg-white p-4 rounded-3xl shadow-sm border border-blue-100 mb-6">
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-blue-100 mb-6 w-full">
         <h4 class="font-black text-sm mb-3 text-blue-900">Янги қўшиш</h4>
         <input type="text" id="pName" class="w-full border border-gray-200 rounded-xl p-3 mb-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Номи (масалан: Гўшт)">
-        <div class="flex space-x-2 mb-4">
+        <div class="flex space-x-2 mb-4 w-full">
           <input type="number" id="pPrice" class="w-2/3 border border-gray-200 rounded-xl p-3 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Нархи">
           <select id="pUnit" class="w-1/3 border border-gray-200 rounded-xl p-3 bg-gray-50 text-sm outline-none">
             <option value="кг">кг</option><option value="литр">литр</option><option value="дона">дона</option>
@@ -288,8 +288,8 @@ export function renderWorker(container, user, onLogout) {
         <button id="addProdBtn" class="w-full bg-blue-50 text-blue-600 border border-blue-100 font-bold py-3.5 rounded-xl active:scale-95 transition-transform">Базага қўшиш</button>
       </div>
       
-      <h4 class="font-extrabold text-gray-400 mb-3 px-1 text-xs uppercase tracking-widest">Мавжуд маҳсулотлар</h4>
-      ${list || '<div class="text-center text-xs text-gray-400 py-4">Маҳсулотлар йўқ</div>'}
+      <h4 class="font-extrabold text-gray-400 mb-3 px-1 text-xs uppercase tracking-widest w-full">Мавжуд маҳсулотлар</h4>
+      ${list || '<div class="text-center text-xs text-gray-400 py-4 w-full">Маҳсулотлар йўқ</div>'}
     `;
 
     // Ўчириш
@@ -330,19 +330,19 @@ export function renderWorker(container, user, onLogout) {
   // ==========================================
   function renderProfileTab() {
     tabContent.innerHTML = `
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-5 text-center">
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-5 text-center w-full">
         <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-4xl mb-3 shadow-sm border border-blue-100">👤</div>
         <h2 class="font-black text-2xl text-gray-900 tracking-tight">${user.name}</h2>
         <p class="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-widest">${user.category} бўлими</p>
       </div>
 
-      <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 w-full">
         <h4 class="font-bold text-sm mb-4 text-gray-800">Хавфсизлик ва Созламалар</h4>
         
         <label class="block text-xs font-bold text-gray-500 mb-1.5">Янги ПИН-код (4 та рақам):</label>
         <input type="number" id="newPin" class="w-full border border-gray-200 rounded-xl p-3.5 mb-4 bg-gray-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Янги кодни киритинг">
         
-        <label class="block text-xs font-bold text-gray-500 mb-1.5 flex justify-between">
+        <label class="block text-xs font-bold text-gray-500 mb-1.5 flex justify-between w-full">
           <span>Telegram Chat ID:</span>
           <a href="https://t.me/userinfobot" target="_blank" class="text-blue-500">ID ни олиш</a>
         </label>
