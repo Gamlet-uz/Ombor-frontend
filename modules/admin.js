@@ -19,12 +19,12 @@ export async function renderAdmin(container, user, onLogout) {
   const catNames = { "Ovqat": "Овқат", "Somsa": "Сомса", "Shashlik": "Шашлик", "Fast food": "Fast food" };
   const catKeys = ["Ovqat", "Somsa", "Shashlik", "Fast food"];
 
-  // Асосий қобиқ ва Меню (Тўлиқ экран - w-full)
+  // h-full ва flex-col орқали бутун экранни эгаллаш
   container.innerHTML = `
-    <div class="bg-gray-50 min-h-screen flex flex-col pb-24 w-full">
+    <div class="bg-gray-50 h-full flex flex-col w-full">
       
-      <!-- Тепа қисм -->
-      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10 w-full">
+      <!-- Тепа қисм (Қотирилган: shrink-0) -->
+      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center w-full shrink-0 z-20">
         <div>
           <span class="text-[10px] font-bold uppercase text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-200">Админ Панел</span>
           <h3 class="font-black text-lg text-gray-900 mt-1.5">${user.name}</h3>
@@ -32,8 +32,8 @@ export async function renderAdmin(container, user, onLogout) {
         <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-95">Чиқиш</button>
       </div>
       
-      <!-- Меню (Таблар) -->
-      <div class="flex bg-white border-b border-gray-200 shadow-sm w-full">
+      <!-- Меню Таблар (Қотирилган: shrink-0) -->
+      <div class="flex bg-white border-b border-gray-200 shadow-sm w-full shrink-0 z-20">
         <button class="tab-btn flex-1 py-4 text-sm font-bold text-center border-b-2 text-blue-600 border-blue-600 transition" data-tab="bugun">
           📝 Бугунги ҳисобот
         </button>
@@ -42,8 +42,8 @@ export async function renderAdmin(container, user, onLogout) {
         </button>
       </div>
 
-      <!-- Асосий контент (Динамик ўзгаради) -->
-      <div id="adminContent" class="p-4 transition-opacity duration-300 w-full"></div>
+      <!-- Асосий контент (Фақат шу қисм скролл бўлади: overflow-y-auto) -->
+      <div id="adminContent" class="flex-1 overflow-y-auto p-4 transition-opacity duration-300 w-full pb-10"></div>
     </div>
   `;
 
@@ -62,6 +62,7 @@ export async function renderAdmin(container, user, onLogout) {
       btn.classList.remove('text-gray-400', 'border-transparent');
       
       activeTab = btn.dataset.tab;
+      
       adminContent.style.opacity = 0;
       setTimeout(() => {
         loadTab();
@@ -118,7 +119,7 @@ export async function renderAdmin(container, user, onLogout) {
          <div class="text-4xl font-black text-gray-500 mt-2" id="totalProfit">0 сўм</div>
       </div>
       
-      <button id="saveSalesBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-transform">
+      <button id="saveSalesBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-transform mb-4">
         Савдони Сақлаш
       </button>
     `;
