@@ -8,13 +8,17 @@ export async function renderAdmin(container, user, onLogout) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const tg = window.Telegram?.WebApp;
-  function haptic(type = 'light') { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(type); }
+  function haptic(type = 'light') { 
+    if (tg && tg.HapticFeedback) {
+      if(type === 'success' || type === 'error') tg.HapticFeedback.notificationOccurred(type);
+      else tg.HapticFeedback.impactOccurred(type);
+    }
+  }
 
   const catNames = { "Ovqat": "Овқат", "Somsa": "Сомса", "Shashlik": "Шашлик", "Fast food": "Fast food" };
   const catIcons = { "Ovqat": "🍲", "Somsa": "🥟", "Shashlik": "🍢", "Fast food": "🍔" };
   const catKeys = ["Ovqat", "Somsa", "Shashlik", "Fast food"];
 
-  // Экран структураси (Қотирилган тепа ва паст, ўртаси скролл)
   container.innerHTML = `
     <div class="flex flex-col h-screen w-full bg-gray-50 overflow-hidden">
       <!-- Қотирилган Сарлавҳа -->
@@ -26,7 +30,7 @@ export async function renderAdmin(container, user, onLogout) {
         <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
       </div>
 
-      <!-- Асосий контент (Скролл бўладиган жой) -->
+      <!-- Асосий контент -->
       <div id="adminContent" class="flex-1 overflow-y-auto w-full p-4 pb-8 relative z-0"></div>
 
       <!-- Қотирилган Пастки Навигация -->
@@ -47,33 +51,29 @@ export async function renderAdmin(container, user, onLogout) {
   document.getElementById("logoutBtn").onclick = () => { haptic(); onLogout(); };
   const adminContent = document.getElementById("adminContent");
 
-  // Таблар мантиғи
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       haptic('light');
       document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-600'); b.classList.add('text-gray-400'); });
       btn.classList.add('text-blue-600'); btn.classList.remove('text-gray-400');
-      
       activeTab = btn.dataset.tab;
-      activeCategory = null; // Таб ўзгарганда категориядан чиқиш
+      activeCategory = null; 
       
       adminContent.style.opacity = 0; 
-      setTimeout(() => { 
-        renderActiveView(); 
-        adminContent.style.opacity = 1; 
-        adminContent.scrollTop = 0; 
-      }, 150);
+      setTimeout(() => { renderActiveView(); adminContent.style.opacity = 1; adminContent.scrollTop = 0; }, 150);
     };
   });
 
-  // Базадан маълумот юклаш
   async function loadData() {
     adminContent.innerHTML = `<div class="text-center py-10 w-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>`;
     try {
       const res = await fetchMonitoring();
       monitoringData = res.records || [];
-      // Бугунги маълумотни ажратиб олиш
+      // Агар бугунги маълумот топилмаса, бўш объект яратамиз (Хатоликни олдини олиш учун)
       todayData = monitoringData.find(d => d.date === todayStr) || { expenses: {}, sales: {} };
+      if(!todayData.sales) todayData.sales = {}; // Қўшимча хавфсизлик
+      if(!todayData.expenses) todayData.expenses = {};
+
       renderActiveView();
     } catch (e) {
       adminContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold w-full">Маълумотларни юклаб бўлмади!</div>`;
@@ -119,7 +119,6 @@ export async function renderAdmin(container, user, onLogout) {
       </div>
     `;
 
-    // Умумий фойдани ҳисоблаш
     let totalProf = 0;
     catKeys.forEach(k => {
       const e = todayData.expenses[k] ? todayData.expenses[k].grandTotal : 0;
@@ -129,7 +128,6 @@ export async function renderAdmin(container, user, onLogout) {
     document.getElementById('grandTotalProfit').textContent = totalProf.toLocaleString() + ' сўм';
   }
 
-  // Глобал функция сифатида эълон қилиш (HTML ичидан чақириш учун)
   window.openCategory = (cat) => { haptic('light'); activeCategory = cat; renderActiveView(); };
 
   // =====================================
@@ -177,7 +175,6 @@ export async function renderAdmin(container, user, onLogout) {
       </button>
     `;
 
-    // Жонли фойда ва Сомса 60/40 ҳисоби
     const calc = () => {
       const sale = parseFloat(document.getElementById('catSaleInput').value) || 0;
       const profit = sale - totalExp;
@@ -200,22 +197,39 @@ export async function renderAdmin(container, user, onLogout) {
     document.getElementById('catSaleInput').addEventListener('input', calc);
     calc();
 
+    // ХАТОЛИКЛАРНИ АНИҚ КЎРСАТУВЧИ ҚИСМ
     document.getElementById('saveCatSaleBtn').onclick = async (e) => {
       haptic('medium');
       const saleVal = parseFloat(document.getElementById('catSaleInput').value) || 0;
-      e.target.disabled = true; e.target.textContent = "⏳...";
       
-      const incomes = { ...todayData.sales, [activeCategory]: saleVal };
+      const btn = e.target;
+      btn.disabled = true; 
+      btn.textContent = "Сақланмоқда ⏳...";
+      
+      // Агар sales бўлмаса, хатолик бермаслиги учун хавфсиз нусхалаш
+      const currentSales = todayData.sales || {};
+      const incomes = { ...currentSales, [activeCategory]: saleVal };
       
       try {
         const res = await saveSales({ date: todayStr, incomes });
+        
         if (res.success) {
           haptic('success');
           todayData.sales = incomes; 
-          alert("✅ Савдо сақланди!");
+          alert("✅ Савдо муваффақиятли сақланди!");
           window.openCategory(null); 
+        } else {
+          haptic('error');
+          alert("❌ Сервер хатоси: " + res.message);
+          btn.disabled = false; 
+          btn.textContent = "Савдони Сақлаш";
         }
-      } catch (err) { alert("Хатолик!"); e.target.disabled = false; e.target.textContent = "Савдони Сақлаш"; }
+      } catch (err) { 
+        haptic('error');
+        alert("❌ Уланишда хатолик юз берди!\n" + err.message); 
+        btn.disabled = false; 
+        btn.textContent = "Савдони Сақлаш"; 
+      }
     };
   }
 
@@ -325,7 +339,7 @@ export async function renderAdmin(container, user, onLogout) {
       if(Object.keys(obj).length){ 
         haptic('medium'); e.target.textContent="⏳..."; 
         await updateProfile(user.id, obj); alert("Янгиланди!"); 
-        document.getElementById("newPin").value=""; e.target.textContent="Ўзгаришларни сақлаш"; 
+        document.getElementById("newPin").value=""; e.target.textContent="Сақлаш"; 
       } 
     };
   }
