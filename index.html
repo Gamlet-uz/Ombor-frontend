@@ -14,7 +14,9 @@
       -webkit-tap-highlight-color: transparent; /* Босгандаги кўк фонни йўқотиш */
       margin: 0;
       padding: 0;
-      overflow-x: hidden; /* Ёнга силжиб кетишни олдини олиш */
+      overflow: hidden; /* БУТУН ЭКРАННИ ҚОТИРИШ (Скролл фақат контентда бўлади) */
+      height: 100vh; /* Экран баландлигини 100% қилиш */
+      background-color: #f9fafb;
     }
     
     .pin-dot {
@@ -41,10 +43,11 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800 select-none w-full min-h-screen">
+<body class="font-sans text-gray-800 select-none w-full h-full flex flex-col">
 
   <!-- ================= 1. ПИН-КОД ЭКРАНИ ================= -->
-  <div id="screen-auth" class="min-h-screen w-full flex items-center justify-center px-4 fade-in">
+  <!-- flex-1 орқали бўш жойни тўлдиради ва марказга жойлаштиради -->
+  <div id="screen-auth" class="flex-1 w-full flex items-center justify-center px-4 fade-in">
     <div class="bg-white rounded-[2rem] shadow-xl p-8 text-center w-full max-w-sm">
       <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-4 shadow-sm border border-blue-100">🔒</div>
       <h2 class="text-2xl font-black text-gray-800 tracking-tight">Шахсий код</h2>
@@ -76,7 +79,6 @@
         <button onclick="clearPin()" class="h-14 rounded-2xl bg-gray-50 hover:bg-red-50 text-red-500 active:scale-95 transition-all font-black text-xl shadow-sm border border-gray-100">C</button>
         <button onclick="pressKey('0')" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-blue-100 active:scale-95 transition-all font-black text-2xl text-gray-700 shadow-sm border border-gray-100">0</button>
         <button onclick="deleteLastKey()" class="h-14 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 active:scale-95 transition-all font-black text-xl text-gray-700 shadow-sm border border-gray-100 flex items-center justify-center">
-          <!-- Backspace Icon -->
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" /></svg>
         </button>
       </div>
@@ -84,8 +86,8 @@
   </div>
 
   <!-- ================= 2. МУТАХАССИСЛИК (АДМИН / ИШЧИ) КОНТЕЙНЕРИ ================= -->
-  <!-- w-full орқали телефон экрани четигача тўлиқ очилади -->
-  <div id="module-container" class="hidden fade-in w-full min-h-screen"></div>
+  <!-- Контейнер ҳам тўлиқ экранни эгаллайди ва flex-col бўлади -->
+  <div id="module-container" class="hidden fade-in w-full h-full flex flex-col"></div>
 
   <script type="module">
     import { loginWithPin } from "./api.js";
