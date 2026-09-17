@@ -13,38 +13,44 @@ export function renderWorker(container, user, onLogout) {
     }
   }
 
-  // Экранни ёйиш ва fixed менюларни ишлатиш
+  // МУҲИМ ЎЗГАРИШ: Экран структураси тўғриланди. 
+  // Тепа (h-16) ва Паст (h-16) қотирилган. 
+  // Ўртадаги контент (flex-1 overflow-y-auto) бемалол скролл бўлади.
   container.innerHTML = `
-    <!-- Юқори қисм (Fixed - Қотирилган) -->
-    <div class="fixed top-0 left-0 right-0 bg-white px-5 py-4 shadow-sm flex justify-between items-center z-50">
-      <div>
-        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">${user.category}</span>
-        <h3 class="font-black text-lg text-gray-900 mt-1.5">${user.name}</h3>
+    <div class="flex flex-col h-screen w-full bg-gray-50 overflow-hidden">
+      
+      <!-- Юқори қисм (Қотирилган) -->
+      <div class="h-16 bg-white px-5 shadow-sm flex justify-between items-center shrink-0 w-full z-50 relative">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">${user.category}</span>
+          <h3 class="font-black text-lg text-gray-900 mt-0.5">${user.name}</h3>
+        </div>
+        <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
       </div>
-      <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
-    </div>
 
-    <!-- Ўртадаги Контент (Скролл бўлиши учун pt-24 ва pb-28 берилди) -->
-    <div id="tabContent" class="w-full pt-24 pb-28 px-4 transition-opacity duration-300"></div>
+      <!-- Ўртадаги Контент (Фақат шу жой скролл бўлади) -->
+      <div id="tabContent" class="flex-1 overflow-y-auto w-full p-4 pb-8 relative z-0"></div>
 
-    <!-- Пастки Навигация (Fixed - Қотирилган) -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center pt-2 pb-5 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-50">
-      <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-blue-600 transition-transform active:scale-90" data-tab="expense">
-        <span class="text-xl mb-1">📝</span>
-        <span class="text-[10px] font-bold">Харажат</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="history">
-        <span class="text-xl mb-1">📊</span>
-        <span class="text-[10px] font-bold">Ҳисобот</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="products">
-        <span class="text-xl mb-1">📦</span>
-        <span class="text-[10px] font-bold">Маҳсулот</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-gray-400 transition-transform active:scale-90" data-tab="profile">
-        <span class="text-xl mb-1">⚙️</span>
-        <span class="text-[10px] font-bold">Профил</span>
-      </button>
+      <!-- Пастки Навигация (Қотирилган) -->
+      <div class="h-16 bg-white border-t border-gray-200 flex justify-around items-center shrink-0 w-full z-50 relative shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] pb-safe">
+        <button class="nav-btn flex flex-col items-center justify-center w-1/4 h-full text-blue-600 transition-transform active:scale-90" data-tab="expense">
+          <span class="text-xl leading-none mb-1">📝</span>
+          <span class="text-[10px] font-bold leading-none">Харажат</span>
+        </button>
+        <button class="nav-btn flex flex-col items-center justify-center w-1/4 h-full text-gray-400 transition-transform active:scale-90" data-tab="history">
+          <span class="text-xl leading-none mb-1">📊</span>
+          <span class="text-[10px] font-bold leading-none">Ҳисобот</span>
+        </button>
+        <button class="nav-btn flex flex-col items-center justify-center w-1/4 h-full text-gray-400 transition-transform active:scale-90" data-tab="products">
+          <span class="text-xl leading-none mb-1">📦</span>
+          <span class="text-[10px] font-bold leading-none">Маҳсулот</span>
+        </button>
+        <button class="nav-btn flex flex-col items-center justify-center w-1/4 h-full text-gray-400 transition-transform active:scale-90" data-tab="profile">
+          <span class="text-xl leading-none mb-1">⚙️</span>
+          <span class="text-[10px] font-bold leading-none">Профил</span>
+        </button>
+      </div>
+      
     </div>
   `;
 
@@ -68,7 +74,7 @@ export function renderWorker(container, user, onLogout) {
       setTimeout(() => { 
         loadTabContent(); 
         tabContent.style.opacity = 1; 
-        window.scrollTo(0, 0); // Янги таб очилганда энг тепага чиқиш
+        tabContent.scrollTop = 0; // Янги таб очилганда энг тепага чиқиш
       }, 150);
     };
   });
@@ -116,14 +122,14 @@ export function renderWorker(container, user, onLogout) {
       }
       return `
         <div class="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
-          <div class="flex-1 pr-2">
-            <div class="font-bold text-sm text-gray-800">${p.name}</div>
+          <div class="flex-1 pr-2 overflow-hidden">
+            <div class="font-bold text-sm text-gray-800 truncate">${p.name}</div>
             <div class="text-[10px] text-gray-400">${p.price.toLocaleString()} сўм / ${p.unit}</div>
           </div>
-          <div class="w-20">
+          <div class="w-20 shrink-0">
             <input type="number" step="any" min="0" data-id="${p.id}" value="${qtyVal}" class="qty-input w-full border border-gray-200 rounded-xl p-2 text-center font-bold bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
           </div>
-          <div class="w-24 text-right">
+          <div class="w-24 text-right shrink-0 pl-1">
             <span class="text-sm font-black text-blue-600 item-total" id="tot-${p.id}">0</span>
           </div>
         </div>
@@ -139,8 +145,8 @@ export function renderWorker(container, user, onLogout) {
       
       <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2 w-full">
         <div class="flex-1">Маҳсулот</div>
-        <div class="w-20 text-center">Миқдор</div>
-        <div class="w-24 text-right">Сумма</div>
+        <div class="w-20 text-center shrink-0">Миқдор</div>
+        <div class="w-24 text-right shrink-0">Сумма</div>
       </div>
       <div class="mb-4 w-full">${rows}</div>
       
@@ -212,7 +218,7 @@ export function renderWorker(container, user, onLogout) {
           haptic('success'); 
           alert("✅ " + res.message); 
           loadTabContent(); 
-          window.scrollTo(0, 0); 
+          tabContent.scrollTop = 0; 
         }
       } catch (err) { 
         alert("Хатолик!"); 
@@ -233,8 +239,8 @@ export function renderWorker(container, user, onLogout) {
     const cards = history.map(h => {
       const itemsList = (h.items || []).map(i => `
         <div class="flex justify-between text-xs py-1.5 border-b border-gray-100 last:border-0 w-full">
-          <span class="text-gray-600">${i.name} (${i.qty} ${i.unit})</span>
-          <span class="font-bold text-gray-800">${i.total.toLocaleString()}</span>
+          <span class="text-gray-600 truncate mr-2">${i.name} (${i.qty} ${i.unit})</span>
+          <span class="font-bold text-gray-800 shrink-0">${i.total.toLocaleString()}</span>
         </div>
       `).join('');
       return `
@@ -263,11 +269,11 @@ export function renderWorker(container, user, onLogout) {
   function renderProductsTab() {
     const list = products.map(p => `
       <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
-        <div>
-          <div class="font-bold text-sm text-gray-800">${p.name}</div>
+        <div class="overflow-hidden pr-2">
+          <div class="font-bold text-sm text-gray-800 truncate">${p.name}</div>
           <div class="text-[10px] text-gray-500 font-semibold">${p.price.toLocaleString()} сўм / ${p.unit}</div>
         </div>
-        <button class="del-prod text-red-500 bg-red-50 p-2.5 rounded-xl active:scale-90 transition" data-id="${p.id}">🗑</button>
+        <button class="del-prod text-red-500 bg-red-50 p-2.5 rounded-xl active:scale-90 transition shrink-0" data-id="${p.id}">🗑</button>
       </div>
     `).join('');
     tabContent.innerHTML = `
@@ -300,7 +306,7 @@ export function renderWorker(container, user, onLogout) {
         e.target.textContent="⏳"; 
         await addProduct({ category: user.category, name, price: Number(price), unit }); 
         loadTabContent(); 
-        window.scrollTo(0,0); 
+        tabContent.scrollTop = 0; 
       } 
     };
   }
