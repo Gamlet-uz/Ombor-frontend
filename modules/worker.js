@@ -7,7 +7,6 @@ export function renderWorker(container, user, onLogout) {
 
   const tg = window.Telegram?.WebApp;
 
-  // Ҳаяжон (вибрация) эффекти
   function haptic(type = 'light') {
     if (tg && tg.HapticFeedback) {
       if(type === 'success' || type === 'error') tg.HapticFeedback.notificationOccurred(type);
@@ -15,12 +14,12 @@ export function renderWorker(container, user, onLogout) {
     }
   }
 
-  // Асосий қобиқ ва Пастки Навигация (Bottom Nav) - ТЎЛИҚ ЭКРАН (w-full)
+  // h-full ва flex-col орқали бутун экран қотирилади
   container.innerHTML = `
-    <div class="bg-gray-50 min-h-screen flex flex-col pb-24 w-full">
+    <div class="bg-gray-50 h-full flex flex-col w-full">
       
-      <!-- Сарлавҳа -->
-      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center sticky top-0 z-10 w-full">
+      <!-- Сарлавҳа (Қотирилган: shrink-0) -->
+      <div class="bg-white px-5 py-4 shadow-sm flex justify-between items-center w-full shrink-0 z-20">
         <div>
           <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">${user.category}</span>
           <h3 class="font-black text-lg text-gray-900 mt-1.5">${user.name}</h3>
@@ -28,11 +27,11 @@ export function renderWorker(container, user, onLogout) {
         <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
       </div>
 
-      <!-- Таб Контентлари (Динамик ўзгаради) -->
-      <div id="tabContent" class="flex-1 p-4 transition-opacity duration-300 ease-in-out w-full"></div>
+      <!-- Ўртадаги Контент (Фақат шу жой скролл бўлади: overflow-y-auto) -->
+      <div id="tabContent" class="flex-1 overflow-y-auto p-4 w-full pb-6 transition-opacity duration-300"></div>
 
-      <!-- Bottom Navigation Bar (ТЎЛИҚ ЭКРАН КЕНГЛИГИДА) -->
-      <div class="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 flex justify-around items-center pt-2 pb-5 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-20">
+      <!-- Bottom Navigation (Қотирилган: shrink-0) -->
+      <div class="w-full bg-white border-t border-gray-200 flex justify-around items-center pt-2 pb-5 px-2 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] shrink-0 z-20">
         <button class="nav-btn flex flex-col items-center p-2 w-1/4 text-blue-600 transition-transform active:scale-90" data-tab="expense">
           <span class="text-xl mb-1">📝</span>
           <span class="text-[10px] font-bold">Харажат</span>
@@ -83,16 +82,18 @@ export function renderWorker(container, user, onLogout) {
     
     try {
       if (activeTab === 'expense') {
-        const res = await fetchProducts(user.category);
-        products = res.records || [];
+        const pRes = await fetchProducts(user.category);
+        products = pRes.records || [];
+        const hRes = await fetchHistory(user.category); // Тарихни ҳам оламиз
+        history = hRes.records || [];
         renderExpenseTab();
       } else if (activeTab === 'history') {
-        const res = await fetchHistory(user.category);
-        history = res.records || [];
+        const hRes = await fetchHistory(user.category);
+        history = hRes.records || [];
         renderHistoryTab();
       } else if (activeTab === 'products') {
-        const res = await fetchProducts(user.category);
-        products = res.records || [];
+        const pRes = await fetchProducts(user.category);
+        products = pRes.records || [];
         renderProductsTab();
       } else if (activeTab === 'profile') {
         renderProfileTab();
@@ -103,7 +104,7 @@ export function renderWorker(container, user, onLogout) {
   }
 
   // ==========================================
-  // ТАБ 1: ХАРАЖАТ ЯРАТИШ
+  // ТАБ 1: ХАРАЖАТ ЯРАТИШ (ВА ТАҲРИРЛАШ)
   // ==========================================
   function renderExpenseTab() {
     if (products.length === 0) {
@@ -111,22 +112,40 @@ export function renderWorker(container, user, onLogout) {
       return;
     }
 
-    const rows = products.map(p => `
+    // Бугунги санани аниқлаш ва тарихдан бугунги ҳисоботни қидириш
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecord = history.find(h => h.date === today);
+    const isEdit = !!todayRecord; // Агар бор бўлса, демак таҳрирлаш режими
+
+    const rows = products.map(p => {
+      let qtyVal = "";
+      // Агар таҳрирлаш режими бўлса ва бу маҳсулот олдин сақланган бўлса, унинг миқдорини оламиз
+      if (isEdit && todayRecord.items) {
+        const found = todayRecord.items.find(i => i.name === p.name);
+        if (found) qtyVal = found.qty;
+      }
+      return `
       <div class="flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
         <div class="flex-1 pr-2">
           <div class="font-bold text-sm text-gray-800">${p.name}</div>
           <div class="text-[10px] text-gray-400">${p.price.toLocaleString()} сўм / ${p.unit}</div>
         </div>
         <div class="w-20">
-          <input type="number" step="any" min="0" data-id="${p.id}" class="qty-input w-full border border-gray-200 rounded-xl p-2 text-center font-bold text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
+          <input type="number" step="any" min="0" data-id="${p.id}" value="${qtyVal}" class="qty-input w-full border border-gray-200 rounded-xl p-2 text-center font-bold text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
         </div>
         <div class="w-24 text-right">
           <span class="text-sm font-black text-blue-600 item-total" id="tot-${p.id}">0</span>
         </div>
       </div>
-    `).join('');
+    `}).join('');
+
+    const salVal = isEdit ? todayRecord.salary : "";
+    const extVal = isEdit ? todayRecord.extra : "";
+    const btnText = isEdit ? "Ўзгартиришни Сақлаш" : "Харажатни Сақлаш";
 
     tabContent.innerHTML = `
+      ${isEdit ? '<div class="bg-blue-50 text-blue-700 p-3 rounded-xl mb-3 text-xs font-bold text-center border border-blue-200">ℹ️ Бугунги ҳисоботни таҳрирлаяпсиз</div>' : ''}
+      
       <div class="mb-2 flex text-[10px] font-bold text-gray-400 uppercase px-2 tracking-wider w-full">
         <div class="flex-1">Маҳсулот</div>
         <div class="w-20 text-center">Миқдор</div>
@@ -136,9 +155,9 @@ export function renderWorker(container, user, onLogout) {
       
       <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4 w-full">
         <label class="block text-xs font-bold text-gray-500 mb-1.5">Ходим ойлиги (сўм):</label>
-        <input type="number" id="salaryInput" class="w-full border border-gray-200 rounded-xl p-3 mb-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
+        <input type="number" id="salaryInput" value="${salVal}" class="w-full border border-gray-200 rounded-xl p-3 mb-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
         <label class="block text-xs font-bold text-gray-500 mb-1.5">Қўшимча харажат (сўм):</label>
-        <input type="number" id="extraInput" class="w-full border border-gray-200 rounded-xl p-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
+        <input type="number" id="extraInput" value="${extVal}" class="w-full border border-gray-200 rounded-xl p-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
       </div>
 
       <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-lg mb-5 text-center w-full">
@@ -146,8 +165,8 @@ export function renderWorker(container, user, onLogout) {
         <div class="text-3xl font-black mt-1" id="grandTotal">0 сўм</div>
       </div>
 
-      <button id="saveExpenseBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-transform">
-        Харажатни Сақлаш
+      <button id="saveExpenseBtn" class="w-full ${isEdit ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-transform">
+        ${btnText}
       </button>
     `;
 
@@ -169,6 +188,9 @@ export function renderWorker(container, user, onLogout) {
     document.querySelectorAll('.qty-input').forEach(i => i.addEventListener('input', calc));
     document.getElementById("salaryInput").addEventListener('input', calc);
     document.getElementById("extraInput").addEventListener('input', calc);
+    
+    // Эски маълумотлар билан ҳисоб-китобни янгилаб қўйиш
+    setTimeout(calc, 50);
 
     // Сақлаш
     document.getElementById("saveExpenseBtn").onclick = async (e) => {
@@ -193,14 +215,14 @@ export function renderWorker(container, user, onLogout) {
       if (grandTotal === 0) {
         haptic('error');
         alert("Ҳеч қандай харажат киритилмади!");
-        btn.disabled = false; btn.textContent = "Харажатни Сақлаш"; return;
+        btn.disabled = false; btn.textContent = btnText; return;
       }
 
       try {
         const res = await saveExpense({ category: user.category, worker: user.name, items, salary: sal, extra: ext, itemsSum, grandTotal });
         if (res.success) {
           haptic('success');
-          alert("✅ Кунлик харажат муваффақиятли сақланди!");
+          alert("✅ " + res.message); // Сақланди ёки Таҳрирланди хабарини чиқаради
           loadTabContent(); // Экранни тозалаш ва янгилаш
         } else {
           haptic('error');
@@ -210,7 +232,7 @@ export function renderWorker(container, user, onLogout) {
         haptic('error');
         alert("Сервер билан уланишда хатолик!");
       } finally {
-        if(btn) { btn.disabled = false; btn.textContent = "Харажатни Сақлаш"; }
+        if(btn) { btn.disabled = false; btn.textContent = btnText; }
       }
     };
   }
@@ -260,7 +282,7 @@ export function renderWorker(container, user, onLogout) {
   }
 
   // ==========================================
-  // ТАБ 3: МАҲСУЛОТЛАР (ҚЎШИШ/ЎЧИРИШ)
+  // ТАБ 3: МАҲСУЛОТЛАР
   // ==========================================
   function renderProductsTab() {
     const list = products.map(p => `
@@ -292,7 +314,6 @@ export function renderWorker(container, user, onLogout) {
       ${list || '<div class="text-center text-xs text-gray-400 py-4 w-full">Маҳсулотлар йўқ</div>'}
     `;
 
-    // Ўчириш
     document.querySelectorAll('.del-prod').forEach(btn => {
       btn.onclick = async () => {
         haptic('medium');
@@ -305,7 +326,6 @@ export function renderWorker(container, user, onLogout) {
       };
     });
 
-    // Қўшиш
     document.getElementById("addProdBtn").onclick = async (e) => {
       haptic('light');
       const name = document.getElementById("pName").value;
@@ -321,12 +341,12 @@ export function renderWorker(container, user, onLogout) {
       e.target.textContent = "Қўшилмоқда ⏳...";
       await addProduct({ category: user.category, name, price: Number(price), unit });
       haptic('success');
-      loadTabContent(); // Қайта юклаш
+      loadTabContent(); 
     };
   }
 
   // ==========================================
-  // ТАБ 4: ПРОФИЛ ВА СОЗЛАМАЛАР
+  // ТАБ 4: ПРОФИЛ
   // ==========================================
   function renderProfileTab() {
     tabContent.innerHTML = `
