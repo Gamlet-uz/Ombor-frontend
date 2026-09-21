@@ -7,27 +7,55 @@ export async function renderAdmin(container, user, onLogout) {
   let todayData = { expenses: {}, sales: {} };
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // Шрифтни катталаштириш учун хотирани ўқиш
+  let isLargeText = localStorage.getItem('largeText') === 'true';
+
   const tg = window.Telegram?.WebApp;
-  function haptic(type = 'light') { 
-    if (tg && tg.HapticFeedback) {
-      if(type === 'success' || type === 'error') tg.HapticFeedback.notificationOccurred(type);
-      else tg.HapticFeedback.impactOccurred(type);
-    }
-  }
+  function haptic(type = 'light') { if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(type); }
 
   const catNames = { "Ovqat": "Овқат", "Somsa": "Сомса", "Shashlik": "Шашлик", "Fast food": "Fast food" };
   const catIcons = { "Ovqat": "🍲", "Somsa": "🥟", "Shashlik": "🍢", "Fast food": "🍔" };
   const catKeys = ["Ovqat", "Somsa", "Shashlik", "Fast food"];
 
+  // ==========================================
+  // КАТТА ШРИФТЛАР УЧУН МАХСУС CSS (Фақат админга)
+  // ==========================================
+  if (!document.getElementById('largeTextStyles')) {
+    const style = document.createElement('style');
+    style.id = 'largeTextStyles';
+    style.innerHTML = `
+      .large-text-mode .text-\\[9px\\] { font-size: 13px !important; }
+      .large-text-mode .text-\\[10px\\] { font-size: 14px !important; line-height: 1.4 !important; }
+      .large-text-mode .text-\\[11px\\] { font-size: 15px !important; }
+      .large-text-mode .text-xs { font-size: 16px !important; line-height: 1.5 !important; }
+      .large-text-mode .text-sm { font-size: 18px !important; line-height: 1.5 !important; }
+      .large-text-mode .text-base { font-size: 20px !important; }
+      .large-text-mode .text-lg { font-size: 22px !important; }
+      .large-text-mode .text-xl { font-size: 26px !important; }
+      .large-text-mode .text-2xl { font-size: 30px !important; }
+      .large-text-mode .text-3xl { font-size: 34px !important; }
+      .large-text-mode .text-4xl { font-size: 44px !important; }
+      .large-text-mode input { font-size: 22px !important; font-weight: 900 !important; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Экран структураси
   container.innerHTML = `
-    <div class="flex flex-col h-screen w-full bg-gray-50 overflow-hidden">
+    <div id="adminMainWrapper" class="flex flex-col h-screen w-full bg-gray-50 overflow-hidden ${isLargeText ? 'large-text-mode' : ''}">
+      
       <!-- Қотирилган Сарлавҳа -->
-      <div class="h-16 bg-white px-5 shadow-sm flex justify-between items-center shrink-0 w-full z-50 relative">
-        <div>
-          <span class="text-[10px] font-bold uppercase text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full border border-purple-200">Админ Панел</span>
-          <h3 class="font-black text-lg text-gray-900 mt-0.5">${user.name}</h3>
+      <div class="h-16 bg-white px-4 shadow-sm flex justify-between items-center shrink-0 w-full z-50 relative">
+        <div class="truncate mr-2">
+          <span class="text-[10px] font-bold uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">Админ</span>
+          <h3 class="font-black text-lg text-gray-900 mt-0.5 truncate">${user.name}</h3>
         </div>
-        <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-90">Чиқиш</button>
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="zoomBtn" class="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-xl font-black text-sm active:scale-90 transition shadow-sm border border-gray-200">
+            ${isLargeText ? 'A-' : 'A+'}
+          </button>
+          <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-95">Чиқиш</button>
+        </div>
       </div>
 
       <!-- Асосий контент -->
@@ -39,7 +67,7 @@ export async function renderAdmin(container, user, onLogout) {
           <span class="text-xl leading-none mb-1">📝</span><span class="text-[10px] font-bold leading-none">Кунлик</span>
         </button>
         <button class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-gray-400 transition-transform active:scale-90" data-tab="monitoring">
-          <span class="text-xl leading-none mb-1">📈</span><span class="text-[10px] font-bold leading-none">Мониторинг</span>
+          <span class="text-xl leading-none mb-1">📈</span><span class="text-[10px] font-bold leading-none">Тарих</span>
         </button>
         <button class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-gray-400 transition-transform active:scale-90" data-tab="profile">
           <span class="text-xl leading-none mb-1">⚙️</span><span class="text-[10px] font-bold leading-none">Профил</span>
@@ -51,11 +79,28 @@ export async function renderAdmin(container, user, onLogout) {
   document.getElementById("logoutBtn").onclick = () => { haptic(); onLogout(); };
   const adminContent = document.getElementById("adminContent");
 
+  // Масштаб (Катталаштириш) тугмасининг ишлаши
+  document.getElementById("zoomBtn").onclick = () => {
+    haptic('medium');
+    isLargeText = !isLargeText;
+    localStorage.setItem('largeText', isLargeText);
+    const wrapper = document.getElementById('adminMainWrapper');
+    if (isLargeText) {
+      wrapper.classList.add('large-text-mode');
+      document.getElementById('zoomBtn').textContent = 'A-';
+    } else {
+      wrapper.classList.remove('large-text-mode');
+      document.getElementById('zoomBtn').textContent = 'A+';
+    }
+  };
+
+  // Таблар мантиғи
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       haptic('light');
       document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-blue-600'); b.classList.add('text-gray-400'); });
       btn.classList.add('text-blue-600'); btn.classList.remove('text-gray-400');
+      
       activeTab = btn.dataset.tab;
       activeCategory = null; 
       
@@ -69,11 +114,9 @@ export async function renderAdmin(container, user, onLogout) {
     try {
       const res = await fetchMonitoring();
       monitoringData = res.records || [];
-      // Агар бугунги маълумот топилмаса, бўш объект яратамиз (Хатоликни олдини олиш учун)
       todayData = monitoringData.find(d => d.date === todayStr) || { expenses: {}, sales: {} };
-      if(!todayData.sales) todayData.sales = {}; // Қўшимча хавфсизлик
+      if(!todayData.sales) todayData.sales = {}; 
       if(!todayData.expenses) todayData.expenses = {};
-
       renderActiveView();
     } catch (e) {
       adminContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold w-full">Маълумотларни юклаб бўлмади!</div>`;
@@ -131,7 +174,7 @@ export async function renderAdmin(container, user, onLogout) {
   window.openCategory = (cat) => { haptic('light'); activeCategory = cat; renderActiveView(); };
 
   // =====================================
-  // КАТЕГОРИЯ ИЧИГА КИРИШ (МАҲСУЛОТЛАР ВА САВДО)
+  // КАТЕГОРИЯ ИЧИГА КИРИШ
   // =====================================
   function renderCategoryDetail() {
     const catData = todayData.expenses[activeCategory]; 
@@ -155,9 +198,9 @@ export async function renderAdmin(container, user, onLogout) {
       
       <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-4 w-full">
         <h4 class="font-black text-lg text-gray-900 mb-4 flex items-center">${catIcons[activeCategory]} ${catNames[activeCategory]} савдоси</h4>
-        <label class="block text-xs font-bold text-gray-500 mb-1.5">Қанча пуллик сотилди? (сўм):</label>
+        <label class="block text-xs font-bold text-gray-500 mb-2">Қанча пуллик сотилди? (сўм):</label>
         <input type="number" id="catSaleInput" value="${currentSale}" class="w-full border border-gray-200 rounded-xl p-3 font-black text-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-600" placeholder="0">
-        <div class="text-[10px] text-right mt-1.5 font-black text-gray-400" id="profitCalc">Фойда: 0</div>
+        <div class="text-[10px] text-right mt-2 font-black text-gray-400" id="profitCalc">Фойда: 0</div>
         <div id="somsaSplitArea" class="mt-2 w-full"></div>
       </div>
 
@@ -187,8 +230,8 @@ export async function renderAdmin(container, user, onLogout) {
         if (profit > 0) {
           area.innerHTML = `
             <div class="flex gap-2 mt-3 text-[10px] font-bold text-center w-full">
-               <div class="w-1/2 bg-blue-50 text-blue-600 py-2 rounded-xl border border-blue-100">60% улуш:<br><span class="text-sm">${(profit * 0.6).toLocaleString()}</span></div>
-               <div class="w-1/2 bg-purple-50 text-purple-600 py-2 rounded-xl border border-purple-100">40% улуш:<br><span class="text-sm">${(profit * 0.4).toLocaleString()}</span></div>
+               <div class="w-1/2 bg-blue-50 text-blue-600 py-3 rounded-xl border border-blue-100">60% улуш:<br><span class="text-sm font-black">${(profit * 0.6).toLocaleString()}</span></div>
+               <div class="w-1/2 bg-purple-50 text-purple-600 py-3 rounded-xl border border-purple-100">40% улуш:<br><span class="text-sm font-black">${(profit * 0.4).toLocaleString()}</span></div>
             </div>`;
         } else { area.innerHTML = ''; }
       }
@@ -197,38 +240,29 @@ export async function renderAdmin(container, user, onLogout) {
     document.getElementById('catSaleInput').addEventListener('input', calc);
     calc();
 
-    // ХАТОЛИКЛАРНИ АНИҚ КЎРСАТУВЧИ ҚИСМ
     document.getElementById('saveCatSaleBtn').onclick = async (e) => {
       haptic('medium');
       const saleVal = parseFloat(document.getElementById('catSaleInput').value) || 0;
-      
       const btn = e.target;
-      btn.disabled = true; 
-      btn.textContent = "Сақланмоқда ⏳...";
+      btn.disabled = true; btn.textContent = "Сақланмоқда ⏳...";
       
-      // Агар sales бўлмаса, хатолик бермаслиги учун хавфсиз нусхалаш
       const currentSales = todayData.sales || {};
       const incomes = { ...currentSales, [activeCategory]: saleVal };
       
       try {
         const res = await saveSales({ date: todayStr, incomes });
-        
         if (res.success) {
           haptic('success');
           todayData.sales = incomes; 
           alert("✅ Савдо муваффақиятли сақланди!");
           window.openCategory(null); 
         } else {
-          haptic('error');
-          alert("❌ Сервер хатоси: " + res.message);
-          btn.disabled = false; 
-          btn.textContent = "Савдони Сақлаш";
+          haptic('error'); alert("❌ Хатолик: " + res.message);
+          btn.disabled = false; btn.textContent = "Савдони Сақлаш";
         }
       } catch (err) { 
-        haptic('error');
-        alert("❌ Уланишда хатолик юз берди!\n" + err.message); 
-        btn.disabled = false; 
-        btn.textContent = "Савдони Сақлаш"; 
+        haptic('error'); alert("❌ Уланишда хатолик юз берди!\n" + err.message); 
+        btn.disabled = false; btn.textContent = "Савдони Сақлаш"; 
       }
     };
   }
@@ -339,7 +373,7 @@ export async function renderAdmin(container, user, onLogout) {
       if(Object.keys(obj).length){ 
         haptic('medium'); e.target.textContent="⏳..."; 
         await updateProfile(user.id, obj); alert("Янгиланди!"); 
-        document.getElementById("newPin").value=""; e.target.textContent="Сақлаш"; 
+        document.getElementById("newPin").value=""; e.target.textContent="Ўзгаришларни сақлаш"; 
       } 
     };
   }
