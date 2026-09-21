@@ -6,7 +6,6 @@ export async function renderAdmin(container, user, onLogout) {
   let monitoringData = [];
   let todayData = { expenses: {}, sales: {}, summary: {} };
   
-  // Санани маҳаллий вақт билан олиш
   const today = new Date();
   const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
@@ -24,9 +23,6 @@ export async function renderAdmin(container, user, onLogout) {
   const catIcons = { "Ovqat": "🍲", "Somsa": "🥟", "Shashlik": "🍢", "Fast food": "🍔" };
   const catKeys = ["Ovqat", "Somsa", "Shashlik", "Fast food"];
 
-  // ==========================================
-  // КАТТА ШРИФТЛАР (A+) - Ёши катталар учун
-  // ==========================================
   if (!document.getElementById('largeTextStyles')) {
     const style = document.createElement('style');
     style.id = 'largeTextStyles';
@@ -49,8 +45,6 @@ export async function renderAdmin(container, user, onLogout) {
 
   container.innerHTML = `
     <div id="adminMainWrapper" class="flex flex-col h-screen w-full bg-gray-50 overflow-hidden ${isLargeText ? 'large-text-mode' : ''}">
-      
-      <!-- Сарлавҳа (Fixed) -->
       <div class="h-16 bg-white px-4 shadow-sm flex justify-between items-center shrink-0 w-full z-50 relative">
         <div class="truncate mr-2">
           <span class="text-[10px] font-bold uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">Админ</span>
@@ -63,11 +57,7 @@ export async function renderAdmin(container, user, onLogout) {
           <button id="logoutBtn" class="text-xs text-red-500 font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition active:scale-95">Чиқиш</button>
         </div>
       </div>
-
-      <!-- Асосий контент (Скролл) -->
       <div id="adminContent" class="flex-1 overflow-y-auto w-full p-4 pb-8 relative z-0"></div>
-
-      <!-- Пастки меню (Fixed) -->
       <div class="h-16 bg-white border-t border-gray-200 flex justify-around items-center shrink-0 w-full z-50 relative shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] pb-safe">
         <button class="nav-btn flex flex-col items-center justify-center w-1/3 h-full text-blue-600 transition-transform active:scale-90" data-tab="kunlik">
           <span class="text-xl leading-none mb-1">📝</span><span class="text-[10px] font-bold leading-none">Кунлик</span>
@@ -130,18 +120,16 @@ export async function renderAdmin(container, user, onLogout) {
   }
 
   // =====================================
-  // 1-ОЙНА: КВАДРАТЛАР ВА КАССА САВДОСИ
+  // 1-ОЙНА: КВАДРАТЛАР ВА КАССА МАЪЛУМОТЛАРИ
   // =====================================
   function renderKunlikGrid() {
     let totalProf = 0;
-    let jamiXarajat = 0;
 
     const gridHtml = catKeys.map(k => {
       const exp = todayData.expenses[k] ? todayData.expenses[k].grandTotal : 0;
       const sale = todayData.sales[k] || 0;
       const profit = sale - exp;
       totalProf += profit;
-      jamiXarajat += exp;
       return `
         <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition" onclick="window.openCategory('${k}')">
           <div class="text-4xl mb-2">${catIcons[k]}</div>
@@ -163,25 +151,25 @@ export async function renderAdmin(container, user, onLogout) {
          <div class="text-3xl font-black mt-2 text-emerald-400">${totalProf.toLocaleString()} сўм</div>
       </div>
 
-      <!-- КАССА ВА САВДО БЎЛИМИ -->
+      <!-- КАССА ВА САВДО БЎЛИМИ (Фақат маълумот учун) -->
       <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mt-5 w-full">
-        <h4 class="font-black text-lg text-gray-900 mb-4 border-b pb-2">Касса ва Савдо</h4>
+        <h4 class="font-black text-lg text-gray-900 mb-4 border-b pb-2">Касса ҳисоботи</h4>
 
         <label class="block text-xs font-bold text-gray-500 mb-1">Умумий савдо (сўм):</label>
         <input type="number" id="sum_umumiy" value="${sum.umumiy || ''}" class="w-full border border-gray-200 p-3 rounded-xl mb-3 font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0">
 
         <div class="flex gap-2 mb-3">
           <div class="w-1/3">
+            <label class="block text-[10px] font-bold text-gray-500 mb-1">Нақд савдо:</label>
+            <input type="number" id="sum_naqd" value="${sum.naqd || ''}" class="w-full border border-gray-200 p-2 rounded-xl font-bold text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500" placeholder="0">
+          </div>
+          <div class="w-1/3">
             <label class="block text-[10px] font-bold text-gray-500 mb-1">Карта:</label>
             <input type="number" id="sum_karta" value="${sum.karta || ''}" class="w-full border border-gray-200 p-2 rounded-xl font-bold text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500" placeholder="0">
           </div>
           <div class="w-1/3">
-            <label class="block text-[10px] font-bold text-gray-500 mb-1">Click/Payme:</label>
+            <label class="block text-[10px] font-bold text-gray-500 mb-1">Click:</label>
             <input type="number" id="sum_click" value="${sum.click || ''}" class="w-full border border-gray-200 p-2 rounded-xl font-bold text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500" placeholder="0">
-          </div>
-          <div class="w-1/3">
-            <label class="block text-[10px] font-bold text-blue-600 mb-1">Нақд пул:</label>
-            <input type="number" id="sum_naqd" value="${sum.naqd || ''}" class="w-full border border-blue-200 p-2 rounded-xl font-black text-sm bg-blue-50 text-blue-600 outline-none focus:ring-1 focus:ring-blue-500" placeholder="0">
           </div>
         </div>
 
@@ -189,11 +177,8 @@ export async function renderAdmin(container, user, onLogout) {
         <input type="number" id="sum_xodim" value="${sum.xodimlar || ''}" class="w-full border border-gray-200 p-3 rounded-xl mb-4 font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
 
         <div class="mt-2 pt-3 border-t-2 border-dashed border-gray-200">
-           <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Жами харажатлар (Бугунги)</div>
-           <div class="text-sm font-bold text-red-500 mb-3">${jamiXarajat.toLocaleString()} сўм</div>
-
-           <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Кассада қолиши керак бўлган нақд пул:</div>
-           <div id="kassa_naqd" class="text-2xl font-black text-blue-600">0 сўм</div>
+           <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Кассадаги нақд пул (қолдиқ):</label>
+           <input type="number" id="sum_kassa_qoldiq" value="${sum.kassa_qoldiq || ''}" class="w-full border border-blue-200 p-3 rounded-xl font-black text-lg bg-blue-50 text-blue-600 outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
         </div>
 
         <button id="saveSummaryBtn" class="w-full mt-5 bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition">
@@ -202,26 +187,16 @@ export async function renderAdmin(container, user, onLogout) {
       </div>
     `;
 
-    // Нақд пулдан харажатларни айириб кассани ҳисоблаш
-    const calcKassa = () => {
-      const naqd = parseFloat(document.getElementById('sum_naqd').value) || 0;
-      const kassa = naqd - jamiXarajat;
-      document.getElementById('kassa_naqd').textContent = kassa.toLocaleString() + ' сўм';
-    };
-    
-    document.getElementById('sum_naqd').addEventListener('input', calcKassa);
-    calcKassa(); 
-
-    // КАССАНИ САҚЛАШ
     document.getElementById('saveSummaryBtn').onclick = async (e) => {
       haptic('medium');
       const btn = e.target; btn.disabled = true; btn.textContent = "⏳...";
       const summary = {
         umumiy: parseFloat(document.getElementById('sum_umumiy').value) || 0,
+        naqd: parseFloat(document.getElementById('sum_naqd').value) || 0,
         karta: parseFloat(document.getElementById('sum_karta').value) || 0,
         click: parseFloat(document.getElementById('sum_click').value) || 0,
-        naqd: parseFloat(document.getElementById('sum_naqd').value) || 0,
-        xodimlar: parseFloat(document.getElementById('sum_xodim').value) || 0
+        xodimlar: parseFloat(document.getElementById('sum_xodim').value) || 0,
+        kassa_qoldiq: parseFloat(document.getElementById('sum_kassa_qoldiq').value) || 0 // Янги майдон
       };
 
       try {
@@ -238,9 +213,6 @@ export async function renderAdmin(container, user, onLogout) {
 
   window.openCategory = (cat) => { haptic('light'); activeCategory = cat; renderActiveView(); };
 
-  // =====================================
-  // КАТЕГОРИЯ (БЎЛИМ) ИЧИГА КИРИШ
-  // =====================================
   function renderCategoryDetail() {
     const catData = todayData.expenses[activeCategory]; 
     const currentSale = todayData.sales[activeCategory] || "";
@@ -296,21 +268,15 @@ export async function renderAdmin(container, user, onLogout) {
     };
     document.getElementById('catSaleInput').addEventListener('input', calc); calc();
 
-    // БЎЛИМ САВДОСИНИ САҚЛАШ
     document.getElementById('saveCatSaleBtn').onclick = async (e) => {
       haptic('medium'); const btn = e.target; btn.disabled = true; btn.textContent = "⏳...";
       const saleVal = parseFloat(document.getElementById('catSaleInput').value) || 0;
       const incomes = { ...(todayData.sales || {}), [activeCategory]: saleVal };
       try {
         const res = await saveSales({ date: todayStr, incomes });
-        if (res.success) { 
-          haptic('success'); 
-          todayData.sales = incomes; 
-          alert("✅ Сақланди!"); 
-          window.openCategory(null); 
-        } 
+        if (res.success) { haptic('success'); todayData.sales = incomes; alert("✅ Сақланди!"); window.openCategory(null); } 
         else { haptic('error'); alert("Хатолик!"); btn.disabled = false; btn.textContent = "Савдони Сақлаш"; }
-      } catch (err) { haptic('error'); alert("Сервер хатоси!"); btn.disabled = false; btn.textContent = "Савдони Сақлаш"; }
+      } catch (err) { haptic('error'); alert("Хатолик!"); btn.disabled = false; btn.textContent = "Савдони Сақлаш"; }
     };
   }
 
@@ -350,21 +316,21 @@ export async function renderAdmin(container, user, onLogout) {
        
        const dayProfit = dayTotalSale - dayTotalExp;
        const sum = d.summary || {};
-       const kassaNaqd = (sum.naqd || 0) - dayTotalExp;
 
-       const kassaHtml = (sum.umumiy || sum.naqd) ? `
+       // Бу ерда энди "kassa_qoldiq" чиқади
+       const kassaHtml = (sum.umumiy || sum.kassa_qoldiq !== undefined) ? `
           <div class="mt-4 pt-3 border-t border-gray-200 bg-gray-50 rounded-xl p-3 shadow-inner w-full">
              <div class="text-[10px] font-black text-gray-500 mb-2 uppercase text-center border-b border-gray-200 pb-1">Касса ҳисоботи</div>
              <div class="grid grid-cols-2 gap-2 text-xs font-bold mb-3 w-full">
-               <div>Умумий: <span class="text-blue-600">${(sum.umumiy||0).toLocaleString()}</span></div>
-               <div>Нақд: <span class="text-gray-800">${(sum.naqd||0).toLocaleString()}</span></div>
+               <div>Умумий савдо: <span class="text-blue-600">${(sum.umumiy||0).toLocaleString()}</span></div>
+               <div>Нақд савдо: <span class="text-gray-800">${(sum.naqd||0).toLocaleString()}</span></div>
                <div>Карта: <span class="text-gray-800">${(sum.karta||0).toLocaleString()}</span></div>
                <div>Click: <span class="text-gray-800">${(sum.click||0).toLocaleString()}</span></div>
                <div class="col-span-2 text-[10px]">Ходимлар овқати: <span class="text-orange-500">${(sum.xodimlar||0).toLocaleString()}</span></div>
              </div>
              <div class="flex justify-between items-center border-t border-gray-200 pt-2 w-full">
-               <span class="text-[10px] text-gray-500 font-bold uppercase">Кассадаги нақд:</span>
-               <span class="font-black text-sm text-blue-600">${kassaNaqd.toLocaleString()}</span>
+               <span class="text-[10px] text-gray-500 font-bold uppercase">Кассадаги нақд пул:</span>
+               <span class="font-black text-sm text-blue-600">${(sum.kassa_qoldiq||0).toLocaleString()}</span>
              </div>
           </div>
        ` : '';
@@ -386,9 +352,6 @@ export async function renderAdmin(container, user, onLogout) {
     adminContent.innerHTML = `<h4 class="font-extrabold text-gray-400 mb-4 px-1 text-xs uppercase tracking-widest text-center w-full">Ойлик Мониторинг</h4>${cards}`;
   }
 
-  // ==========================================
-  // ТАБ 3: ПРОФИЛ
-  // ==========================================
   function renderProfile() {
     adminContent.innerHTML = `
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-5 text-center w-full"><div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-4xl mb-3">👤</div><h2 class="font-black text-2xl text-gray-900 tracking-tight">${user.name}</h2><p class="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-widest">АДМИНИСТРАТОР</p></div>
