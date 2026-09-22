@@ -31,7 +31,7 @@ export async function fetchHistory(category) {
 }
 
 // ==========================================
-// 3. МАҲСУЛОТЛАР (Қўшиш ва Ўчириш)
+// 3. МАҲСУЛОТЛАР (Хомашё - Ишчилар учун)
 // ==========================================
 export async function fetchProducts(category) {
   const res = await fetch(`${API_BASE_URL}/api/products?category=${category}`);
@@ -85,5 +85,29 @@ export async function saveSales(payload) {
 
 export async function fetchMonitoring() {
   const res = await fetch(`${API_BASE_URL}/api/admin/monitoring`);
+  return res.json();
+}
+
+// ==========================================
+// 6. ТАОМЛАР МЕНЮСИ (Админ учун янги қўшилганлар)
+// ==========================================
+export async function fetchMenu() {
+  const res = await fetch(`${API_BASE_URL}/api/menu`);
+  return res.json();
+}
+
+export async function addMenu(data) {
+  const res = await fetch(`${API_BASE_URL}/api/menu`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function deleteMenu(id) {
+  const res = await fetch(`${API_BASE_URL}/api/menu/${id}`, {
+    method: "DELETE"
+  });
   return res.json();
 }
