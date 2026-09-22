@@ -1,4 +1,5 @@
-import { saveSales, fetchMonitoring, updateProfile } from "../api.js";
+// ЭЪТИБОР БЕРИНГ: fetchMenu, addMenu ва deleteMenu api.js дан чақириляпти
+import { saveSales, fetchMonitoring, updateProfile, fetchMenu, addMenu, deleteMenu } from "../api.js";
 
 export async function renderAdmin(container, user, onLogout) {
   let activeTab = 'kunlik'; 
@@ -70,7 +71,7 @@ export async function renderAdmin(container, user, onLogout) {
       <!-- Асосий контент (Скролл) -->
       <div id="adminContent" class="flex-1 overflow-y-auto w-full p-4 pb-8 relative z-0"></div>
 
-      <!-- ЯНГИ НАВИГАЦИЯ (4 ТА ТУГМА) -->
+      <!-- НАВИГАЦИЯ (4 ТА ТУГМА) -->
       <div class="h-16 bg-white border-t border-gray-200 flex justify-around items-center shrink-0 w-full z-50 relative shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] pb-safe">
         <button class="nav-btn flex flex-col items-center justify-center w-1/4 h-full text-blue-600 transition-transform active:scale-90" data-tab="kunlik">
           <span class="text-xl leading-none mb-1">📝</span><span class="text-[10px] font-bold leading-none">Кунлик</span>
@@ -126,9 +127,13 @@ export async function renderAdmin(container, user, onLogout) {
       if(!todayData.summary) todayData.summary = {};
       if(!todayData.soldItems) todayData.soldItems = {};
 
-      // Менюни (таомларни) сервердан юклаш
-      const menuRes = await fetch('/api/menu').then(r=>r.json()).catch(() => ({ records: [] }));
-      if(menuRes.success) menuItemsList = menuRes.records || [];
+      // Менюни (таомларни) тўғридан-тўғри api.js орқали юклаймиз
+      const menuRes = await fetchMenu();
+      if(menuRes && menuRes.success) {
+         menuItemsList = menuRes.records || [];
+      } else {
+         menuItemsList = [];
+      }
 
       renderActiveView();
     } catch (e) { adminContent.innerHTML = `<div class="text-center py-10 text-red-500 font-bold w-full">Сервер билан алоқа йўқ!</div>`; }
@@ -148,7 +153,7 @@ export async function renderAdmin(container, user, onLogout) {
   }
 
   // =====================================
-  // 1-ОЙНА: КУНЛИК (Фақат бўлимлар ва умумий фойда)
+  // 1-ОЙНА: КУНЛИК 
   // =====================================
   function renderKunlikGrid() {
     let totalProf = 0;
@@ -257,7 +262,7 @@ export async function renderAdmin(container, user, onLogout) {
   function renderSavdoTab() {
     let contentHtml = '';
 
-    // 2.1 КАССА ҚИСМИ (Ҳеч қандай айиришсиз)
+    // 2.1 КАССА ҚИСМИ 
     if (subTabSavdo === 'kassa') {
       const sum = todayData.summary || {};
       contentHtml = `
@@ -344,7 +349,7 @@ export async function renderAdmin(container, user, onLogout) {
         `;
       }
     } 
-    // 2.3 МЕНЮ (ЯНГИ ТАОМ ҚЎШИШ) ҚИСМИ
+    // 2.3 МЕНЮ (ЯНГИ ТАОМ ҚЎШИШ) ҚИСМИ (api.js орқали)
     else if (subTabSavdo === 'menu') {
       const list = menuItemsList.map(m => `
         <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-2 w-full">
@@ -427,7 +432,8 @@ export async function renderAdmin(container, user, onLogout) {
         b.onclick = async () => { 
           if(confirm("Ўчирасизми?")){ 
             haptic('medium'); 
-            await fetch(`/api/menu/${b.dataset.id}`, {method:'DELETE'}); 
+            // api.js орқали ўчириш
+            await deleteMenu(b.dataset.id); 
             menuItemsList = menuItemsList.filter(m=>m.id!==b.dataset.id); 
             renderSavdoTab(); 
           } 
@@ -437,8 +443,14 @@ export async function renderAdmin(container, user, onLogout) {
         const cat = document.getElementById('mCat').value, name = document.getElementById('mName').value, price = document.getElementById('mPrice').value;
         if(name && price){ 
           haptic('light'); e.target.textContent="⏳..."; 
-          const r = await fetch(`/api/menu`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({category:cat, name, price})}).then(r=>r.json()); 
-          if(r.success){ menuItemsList.push({id:r.id, category:cat, name, price:Number(price)}); renderSavdoTab(); } 
+          // api.js орқали қўшиш
+          const r = await addMenu({category:cat, name, price}); 
+          if(r && r.success){ 
+            menuItemsList.push({id:r.id, category:cat, name, price:Number(price)}); 
+            renderSavdoTab(); 
+          } else {
+             alert("Хатолик юз берди!"); e.target.textContent="Таомни қўшиш";
+          }
         }
       };
     }
@@ -468,7 +480,10 @@ export async function renderAdmin(container, user, onLogout) {
             const soldCat = d.soldItems[k];
             const soldArr = Object.keys(soldCat).map(id => { 
               const m = menuItemsList.find(x=>x.id===id); 
-              return m ? `<div class="flex justify-between text-[10px] text-blue-600 border-b border-blue-50 py-1 last:border-0"><span class="truncate">${m.name} (${soldCat[id]} та)</span><span>${(m.price*soldCat[id]).toLocaleString()}</span></div>` : ''; 
+              const itemName = m ? m.name : "Ўчирилган таом";
+              const itemPrice = m ? m.price : 0;
+              const itemTotal = itemPrice > 0 ? (itemPrice * soldCat[id]).toLocaleString() : "?";
+              return `<div class="flex justify-between text-[10px] text-blue-600 border-b border-blue-50 py-1 last:border-0"><span class="truncate">${itemName} (${soldCat[id]} та)</span><span>${itemTotal}</span></div>`; 
             }).join('');
             if(soldArr) soldListH = `<div class="mt-2 p-2 bg-blue-50/50 rounded-xl border border-blue-100 w-full"><div class="text-[9px] font-bold text-blue-500 mb-1">СОТИЛГАН ТАОМЛАР:</div>${soldArr}</div>`;
          }
@@ -527,9 +542,6 @@ export async function renderAdmin(container, user, onLogout) {
     adminContent.innerHTML = `<h4 class="font-extrabold text-gray-400 mb-4 px-1 text-xs uppercase tracking-widest text-center w-full">Ойлик Мониторинг</h4>${cards}`;
   }
 
-  // ==========================================
-  // ТАБ 4: ПРОФИЛ
-  // ==========================================
   function renderProfile() {
     adminContent.innerHTML = `
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-5 text-center w-full"><div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-4xl mb-3">👤</div><h2 class="font-black text-2xl text-gray-900 tracking-tight">${user.name}</h2><p class="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-widest">АДМИНИСТРАТОР</p></div>
