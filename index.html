@@ -89,6 +89,7 @@
     import { loginWithPin } from "./api.js";
     import { renderWorker } from "./modules/worker.js";
     import { renderAdmin } from "./modules/admin.js";
+    import { renderBoss } from "./modules/boss.js"; // <--- ЯНГИ ҚЎШИЛДИ
 
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -161,11 +162,15 @@
              tg.HapticFeedback.notificationOccurred('success');
           }
 
+          // <--- БУ ЕРДА ЎЗГАРИШ БЎЛДИ
           if (res.user.role === "admin") {
             renderAdmin(container, res.user, handleLogout);
+          } else if (res.user.role === "boss") {
+            renderBoss(container, res.user, handleLogout);
           } else {
             renderWorker(container, res.user, handleLogout); 
           }
+
         } else {
           if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
           errorEl.classList.replace("text-blue-500", "text-red-500");
